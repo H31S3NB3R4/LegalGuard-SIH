@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LegalGuard User Guide</title>
+<style>
+  :root {
+    --purple: #7c3aed;
+    --cyan: #06b6d4;
+    --pink: #ec4899;
+    --ink: #111827;
+    --ink-soft: #374151;
+    --muted: #6b7280;
+    --bg: #ffffff;
+    --card: #f9fafb;
+    --line: #e5e7eb;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+    font-size: 14px;
+  }
+  .page { max-width: 860px; margin: 0 auto; padding: 48px 56px; }
+  .cover {
+    text-align: center;
+    padding: 80px 40px 60px;
+    border-bottom: 4px solid transparent;
+    border-image: linear-gradient(90deg, var(--purple), var(--cyan)) 1;
+    margin-bottom: 40px;
+  }
+  .cover h1 {
+    font-size: 52px;
+    margin: 0;
+    letter-spacing: 1px;
+    background: linear-gradient(90deg, #7c3aed, #06b6d4);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .cover .tagline { font-size: 18px; color: var(--ink-soft); margin: 12px 0 4px; font-weight: 600; }
+  .cover .sub { color: var(--muted); font-size: 14px; margin-top: 18px; }
+  .badge {
+    display: inline-block;
+    background: linear-gradient(90deg, #ede9fe, #cffafe);
+    color: var(--ink);
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    margin: 6px 4px;
+  }
+  h2 {
+    font-size: 24px;
+    margin: 40px 0 16px;
+    padding-bottom: 8px;
+    border-bottom: 3px solid;
+    border-image: linear-gradient(90deg, var(--purple), var(--cyan)) 1;
+  }
+  h3 { font-size: 18px; margin: 28px 0 8px; color: #5b21b6; }
+  h4 { font-size: 15px; margin: 18px 0 6px; color: #0e7490; }
+  p { margin: 8px 0; }
+  ul, ol { margin: 8px 0 8px 0; padding-left: 24px; }
+  li { margin: 4px 0; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; }
+  th, td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: #f3f0ff; font-weight: 700; }
+  tr:nth-child(even) td { background: var(--card); }
+  code {
+    background: #f3f4f6;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 12.5px;
+    color: #9d174d;
+  }
+  pre {
+    background: #0f172a;
+    color: #e2e8f0;
+    border-radius: 8px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-size: 12.5px;
+    line-height: 1.5;
+  }
+  pre code { background: transparent; border: none; color: inherit; padding: 0; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--purple);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 16px 0;
+  }
+  .card.blue { border-left-color: var(--cyan); }
+  .note {
+    background: #fff7ed;
+    border: 1px solid #fdba74;
+    border-left: 4px solid #f97316;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 14px 0;
+  }
+  .note strong { color: #c2410c; }
+  .step { margin: 6px 0 6px 0; }
+  .flow {
+    text-align: center;
+    font-weight: 700;
+    background: linear-gradient(90deg, #ede9fe, #cffafe);
+    border-radius: 10px;
+    padding: 18px;
+    margin: 18px 0;
+    font-size: 15px;
+  }
+  .flow span { display: inline-block; padding: 2px 10px; }
+  .flow .arrow { color: var(--purple); }
+  .toc { columns: 2; column-gap: 40px; font-size: 14px; }
+  .toc a { color: var(--purple); text-decoration: none; }
+  .toc .num { color: var(--muted); font-weight: 700; }
+  .toc-item { border-bottom: 1px dashed var(--line); padding: 6px 0; }
+  h1.pagebreak-aware, h2.pagebreak-aware { break-before: page; }
+  .footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 48px; border-top: 1px solid var(--line); padding-top: 16px; }
+  @media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    h2 { break-before: page; }
+    .toc h2, .cover, h2.no-break { break-before: auto; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- ============ COVER ============ -->
+<div class="cover">
+  <div>
+    <span class="badge">Smart India Hackathon 2025 — Winning Solution</span>
+    <span class="badge">Team De-bug</span>
+  </div>
+  <h1 style="margin-top:28px;">LegalGuard</h1>
+  <div class="tagline">AI-Driven Automated Legal Metrology Compliance Checker</div>
+  <div class="sub">
+    <strong>Problem Statement:</strong> SIH25057 &nbsp;•&nbsp; <strong>Ministry:</strong> Consumer Affairs, Food &amp; Public Distribution
+    <br>Theme: Miscellaneous &nbsp;•&nbsp; Category: Software
+    <br><br>This guide explains what LegalGuard is, its features, and how to use it.
+  </div>
+</div>
+
+<!-- ============ TABLE OF CONTENTS ============ -->
+<div class="toc no-break">
+  <h2 style="break-before:auto;">Contents</h2>
+  <div class="toc-item"><span class="num">1.</span> <a href="#overview">What is LegalGuard?</a></div>
+  <div class="toc-item"><span class="num">2.</span> <a href="#features">Key Features</a></div>
+  <div class="toc-item"><span class="num">3.</span> <a href="#how">How It Works</a></div>
+  <div class="toc-item"><span class="num">4.</span> <a href="#roles">Roles &amp; Getting Started</a></div>
+  <div class="toc-item"><span class="num">5.</span> <a href="#consumer">Using the App — Consumer</a></div>
+  <div class="toc-item"><span class="num">6.</span> <a href="#seller">Using the App — Seller</a></div>
+  <div class="toc-item"><span class="num">7.</span> <a href="#extension">The Chrome Extension</a></div>
+  <div class="toc-item"><span class="num">8.</span> <a href="#rewards">Rewards &amp; Meta-Tokens</a></div>
+  <div class="toc-item"><span class="num">9.</span> <a href="#setup">Setup &amp; Installation</a></div>
+  <div class="toc-item"><span class="num">10.</span> <a href="#tech">Tech Stack &amp; Architecture</a></div>
+  <div class="toc-item"><span class="num">11.</span> <a href="#faq">FAQ &amp; Troubleshooting</a></div>
+</div>
+
+<!-- ============ 1. OVERVIEW ============ -->
+<h2 id="overview">1. What is LegalGuard?</h2>
+<p>
+  <strong>LegalGuard</strong> is an AI-driven compliance verification system that automatically validates
+  <strong>Legal Metrology declarations</strong> on e-commerce products. It is built to help both
+  consumers and sellers ensure that product listings correctly declare legal attributes such as MRP,
+  net quantity, manufacturer details, country of origin, expiry, weight, and dimensions — in line with
+  Indian Legal Metrology rules.
+</p>
+<p>
+  The platform combines <strong>AI-based label analysis (Gemini multimodal vision)</strong>,
+  <strong>Large Language Model (LLM) reasoning</strong>, and an <strong>automated compliance engine</strong>
+  to detect misleading packaging, incorrect declarations, and regulatory violations <em>before</em>
+  products are published on a marketplace.
+</p>
+<div class="card">
+  <strong>Who it helps</strong>
+  <ul>
+    <li><strong>Consumers</strong> — check whether a product they are buying is compliant.</li>
+    <li><strong>Sellers</strong> — verify a product is compliant before listing it, avoiding costly delisting.</li>
+    <li><strong>Regulators / Platforms</strong> — gain real-time, audit-ready compliance visibility and heatmaps.</li>
+  </ul>
+</div>
+
+<!-- ============ 2. FEATURES ============ -->
+<h2 id="features">2. Key Features</h2>
+<ul>
+  <li><strong>AI-Based Label &amp; Declaration Analysis</strong> — Multilingual OCR via Gemini Multimodal Vision extracts 25+ legal attributes from product images (MRP, net quantity, manufacturer, country of origin, expiry, batch, etc.).</li>
+  <li><strong>LLM-Powered Compliance Reasoning</strong> — Uses Gemini 2.5 Flash to interpret legal rules, reason about violations, and suggest remediation, adapting to updated regulations.</li>
+  <li><strong>Confidence-Weighted Compliance Scoring</strong> — Produces grades (A+, A, B, ...) and a detailed violation breakdown with an explanation-backed decision trail.</li>
+  <li><strong>Pre-Upload Validation Engine</strong> — Lets sellers validate listings before they go live, with readiness scores and fix suggestions.</li>
+  <li><strong>Real-Time Compliance Heatmap</strong> — Tracks compliance trends across manufacturers, importers, and packers; identifies repeat violators and high-risk entities.</li>
+  <li><strong>Compliance Chatbot</strong> — An interactive assistant that answers compliance questions with user/seller-context awareness.</li>
+  <li><strong>Meta-Token Rewards</strong> — Users earn Meta-Tokens (MT) for generating reports and purchases, redeemable for gift cards.</li>
+  <li><strong>Chrome Extension</strong> — A lightweight overlay that checks compliance directly on Amazon and Flipkart product pages.</li>
+</ul>
+
+<!-- ============ 3. HOW ============ -->
+<h2 id="how">3. How It Works</h2>
+<div class="flow">
+  <span>E-Commerce Listing</span> <span class="arrow">▶</span>
+  <span>Image + Metadata</span> <span class="arrow">▶</span>
+  <span>Gemini Vision OCR</span> <span class="arrow">▶</span>
+  <span>LLM Compliance Engine</span> <span class="arrow">▶</span>
+  <span>Score + Violations</span> <span class="arrow">▶</span>
+  <span>Reports &amp; Heatmaps</span>
+</div>
+<ol>
+  <li><strong>Dynamic Web Crawler</strong> — extracts live e-commerce listings and metadata (Amazon categories: general, food, skincare, electronics, books).</li>
+  <li><strong>Gemini Multimodal Vision OCR</strong> — extracts textual and visual label information from product images.</li>
+  <li><strong>LLM Compliance Engine</strong> — validates the extracted data against legal metrology rules.</li>
+  <li><strong>Auto-Remediation Engine</strong> — maps each violation to an actionable fix.</li>
+  <li><strong>Scoring &amp; Reporting</strong> — generates explainable, audit-ready compliance reports.</li>
+</ol>
+
+<!-- ============ 4. ROLES ============ -->
+<h2 id="roles">4. Roles &amp; Getting Started</h2>
+<p>LegalGuard has two user roles, which determine what you can see and do after logging in:</p>
+<table>
+  <tr><th>Role</th><th>What they see</th></tr>
+  <tr>
+    <td><strong>Consumer (customer)</strong></td>
+    <td>Dashboard, Check Compliance, Entities (heatmap), Products, Chatbot, Rewards.</td>
+  </tr>
+  <tr>
+    <td><strong>Seller</strong></td>
+    <td>Seller Verification and Chatbot.</td>
+  </tr>
+</table>
+<h4>Sign up / Log in</h4>
+<ol>
+  <li>Open the app (default <code>http://localhost:3000</code>).</li>
+  <li>Choose <strong>Sign Up</strong> and pick a <strong>role</strong> (<em>customer</em> or <em>seller</em>), a username, and a password.</li>
+  <li>After signing up, <strong>Log In</strong> with your credentials.</li>
+  <li>You are redirected to your role's home page. On login you may be given a <code>userId</code> and <code>role</code>; the navigation menu adapts to your role.</li>
+</ol>
+
+<!-- ============ 5. CONSUMER ============ -->
+<h2 id="consumer" class="pagebreak-aware">5. Using the App — Consumer</h2>
+<h3>Dashboard</h3>
+<p>Your landing page after login. Shows an overview of your recent activity, scraped products, and compliance status.</p>
+<h3>Check Compliance</h3>
+<p>
+  Validates a product for legal metrology compliance. You can supply a product URL (or rely on scraped data)
+  and trigger an AI analysis that returns a compliance <strong>grade</strong>, <strong>score</strong>, a list of
+  high / medium / low priority issues, an estimated approval chance, and recommendations for fixing violations.
+</p>
+<h3>Entities</h3>
+<p>
+  An interactive map/heatmap view that shows compliance trends across locations and entities, helping to spot
+  high-risk sellers, importers, and packers. Powered by the backend heatmap APIs and Google Maps.
+</p>
+<h3>Products</h3>
+<p>
+  Browse the products you (or your account) have scraped. View product details, detailed compliance analysis for a
+  chosen product, and any stored product images.
+</p>
+<h3>Chatbot</h3>
+<p>
+  An AI assistant tailored to your context. Ask compliance questions — it can answer general queries, explain
+  issues on products you've checked, and give seller-specific guidance based on your role.
+</p>
+<h3>Rewards</h3>
+<p>
+  See your accumulated <strong>Meta-Tokens</strong>, browse available gift cards, and redeem tokens for gifts.
+  Your redemption history is shown here too.
+</p>
+
+<!-- ============ 6. SELLER ============ -->
+<h2 id="seller">6. Using the App — Seller</h2>
+<h3>Seller Verification</h3>
+<p>
+  Before uploading a product to a marketplace, sellers use this page to check that the listing will be compliant.
+  It is a <strong>fully software-based</strong> process — no special hardware is required.
+</p>
+<h4>How to verify a product</h4>
+<ol>
+  <li>
+    <strong>Choose a Product Category</strong> — General (Amazon), Food &amp; Beverages, Skincare &amp; Cosmetics,
+    Electronics &amp; Electricals, or Books &amp; Stationery.
+  </li>
+  <li><strong>Enter a Product Description</strong> — Describe the product in detail: brand, features, materials, usage.</li>
+  <li>
+    <strong>Enter Actual Weight and Dimensions</strong> — Type the declared values directly, e.g. weight
+    <code>250g</code> or <code>1.5kg</code>, and dimensions like <code>15x10x5 cm</code>.
+  </li>
+  <li>
+    <strong>Add Product Images</strong> — Either upload image files (JPEG/PNG, up to 10) or capture photos using
+    your device's camera in the browser.
+  </li>
+  <li>Click <strong>Validate Product Compliance</strong>.</li>
+</ol>
+<h4>What you get back</h4>
+<ul>
+  <li>Compliance <strong>score</strong> and <strong>grade</strong> (A/B/C, etc.).</li>
+  <li>A summary of <strong>high, medium, and low priority issues</strong> with penalties.</li>
+  <li><strong>Ready for Upload</strong> (yes/no) and an <strong>Estimated Approval Chance</strong>.</li>
+  <li>Actionable <strong>recommendations</strong> to fix any violations.</li>
+</ul>
+<div class="note">
+  <strong>Software-only:</strong> The seller verification flow runs entirely in software — weight and dimensions
+  are entered manually and images are uploaded or taken with a camera. It does not depend on external sensors or hardware.
+</div>
+<h3>Chatbot</h3>
+<p>Sellers can use the chatbot for compliance guidance and questions relevant to their listings.</p>
+
+<!-- ============ 7. EXTENSION ============ -->
+<h2 id="extension">7. The Chrome Extension</h2>
+<p>
+  The LegalGuard browser extension adds a compliance overlay to e-commerce product pages on
+  <strong>Amazon</strong> and <strong>Flipkart</strong>.
+</p>
+<h4>What it does</h4>
+<ul>
+  <li>Detects product pages (e.g., <code>/dp/ASIN</code> on Amazon, <code>/p/...</code> on Flipkart).</li>
+  <li>Injects a sticky LegalGuard overlay and automatically runs a scrape + compliance validation.</li>
+  <li>Shows a <strong>grade / score badge</strong> on the page and links to a full report in the web app.</li>
+</ul>
+<h4>Using the popup</h4>
+<ul>
+  <li><strong>Log in / Sign up</strong> (with role selection) to connect your account.</li>
+  <li>A <strong>backend status indicator</strong> shows whether the service is reachable.</li>
+  <li>Toggle the extension <strong>enabled / disabled</strong>.</li>
+  <li>A live <strong>activity log</strong> shows recent checks.</li>
+</ul>
+
+<!-- ============ 8. REWARDS ============ -->
+<h2 id="rewards">8. Rewards &amp; Meta-Tokens</h2>
+<p>
+  <strong>Meta-Tokens (MT)</strong> are LegalGuard's native reward tokens that incentivize engagement.
+</p>
+<h4>Earning Meta-Tokens</h4>
+<ul>
+  <li>Generating a <strong>compliance report</strong>.</li>
+  <li>Accessing <strong>affiliate links</strong> to partner e-commerce platforms.</li>
+  <li>Successfully <strong>purchasing products</strong> via those links.</li>
+</ul>
+<p>Tokens earned are proportional to the product value.</p>
+<h4>Redeeming</h4>
+<ul>
+  <li>Redeem tokens for <strong>real-balance gift cards</strong> on e-commerce platforms.</li>
+  <li>Tokens are redeemable in fixed slabs: <code>10 MT</code>, <code>20 MT</code>, and <code>90 MT</code>.</li>
+  <li>Gifts carry a <code>gift_code</code> and <code>gift_pin</code>; redemptions are tracked per user.</li>
+</ul>
+
+<!-- ============ 9. SETUP ============ -->
+<h2 id="setup" class="pagebreak-aware">9. Setup &amp; Installation</h2>
+<h3>Prerequisites</h3>
+<ul>
+  <li>Python 3.8+ and <code>pip</code> (for the backend).</li>
+  <li>MySQL 8.0+ (database name, e.g., <code>amazon_scraper_db</code>).</li>
+  <li>Node.js / npm (for the Next.js frontend).</li>
+  <li>A <strong>Google Gemini API key</strong> for live AI analysis (optional); without it the app runs in Demo Mode.</li>
+</ul>
+
+<h3>Backend (Flask)</h3>
+<ol>
+  <li>Navigate to the backend directory: <code>legal_metrology_backend/legal_metrology</code>.</li>
+  <li>Install Python dependencies (e.g., <code>requirements.txt</code>).</li>
+  <li>
+    Create a <code>.env</code> file with:
+    <pre><code>FLASK_SECRET_KEY=your_secret_key
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_USER=your_mysql_user
+DB_PASSWORD=your_password
+DB_NAME=amazon_scraper_db
+GOOGLE_API_KEY=your_gemini_api_key</code></pre>
+  </li>
+  <li>Initialize the database schema (<code>database_schema.sql</code> / <code>dump.sql</code>).</li>
+  <li>Run the server: <code>python server.py</code> — serves on <code>http://localhost:5000</code>.</li>
+</ol>
+<div class="card">
+  <strong>API keys &amp; Demo Mode</strong><br>
+  When <code>GOOGLE_API_KEY</code> is set, real Gemini analysis runs and <code>AI_AVAILABLE</code> is true.
+  When it is absent, the app runs in <strong>Demo Mode</strong> and returns graceful placeholder compliance reports,
+  which is useful for testing the interface without API costs.
+</div>
+
+<h3>Frontend (Next.js)</h3>
+<ol>
+  <li>Navigate to the frontend directory: <code>frontend</code>.</li>
+  <li>Install dependencies with <code>npm install</code>.</li>
+  <li>Create a <code>.env.local</code> file:
+    <pre><code>NEXT_PUBLIC_BACKEND_URL=http://localhost:5000
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_google_maps_api_key</code></pre>
+  </li>
+  <li>Run the dev server: <code>npm run dev</code> — serves on <code>http://localhost:3000</code>.</li>
+  <li>(Optional) Production: <code>npm run build</code> then <code>npm start</code>.</li>
+</ol>
+<div class="card blue">
+  The frontend expects the backend at <code>http://localhost:5000</code> (via <code>NEXT_PUBLIC_BACKEND_URL</code>),
+  and CORS is configured for <code>http://localhost:3000</code>.
+</div>
+
+<h3>Chrome Extension</h3>
+<ol>
+  <li>Open <code>chrome://extensions</code>.</li>
+  <li>Enable <strong>Developer mode</strong>.</li>
+  <li>Click <strong>Load unpacked</strong> and select the <code>extension/</code> folder.</li>
+  <li>Ensure the backend is running so the extension can connect to <code>http://localhost:5000</code>.</li>
+</ol>
+
+<!-- ============ 10. TECH STACK ============ -->
+<h2 id="tech">10. Tech Stack &amp; Architecture</h2>
+<table>
+  <tr><th>Layer</th><th>Technologies</th></tr>
+  <tr><td>Frontend</td><td>React, Next.js (interactive dashboard)</td></tr>
+  <tr><td>Backend</td><td>Flask (Python), REST APIs</td></tr>
+  <tr><td>AI</td><td>Gemini multimodal OCR + compliance (google-generativeai / LangChain)</td></tr>
+  <tr><td>Web Crawling</td><td>Selenium, BeautifulSoup</td></tr>
+  <tr><td>Database</td><td>MySQL</td></tr>
+  <tr><td>Cloud</td><td>AWS / GCP, S3</td></tr>
+  <tr><td>Analytics</td><td>Python (statistical aggregation)</td></tr>
+</table>
+<p>
+  Key database tables include <code>users</code> (username, password, role), <code>products</code> (scraped listings
+  + analysis results), <code>images</code> (product photos), <code>selleractivity</code> (scrape activity for heatmaps),
+  and the reward <code>gifts</code> catalog.
+</p>
+
+<!-- ============ 11. FAQ ============ -->
+<h2 id="faq">11. FAQ &amp; Troubleshooting</h2>
+<h4>Reports say Demo Mode — what does this mean?</h4>
+<p>
+  You have not set a <code>GOOGLE_API_KEY</code> in the backend <code>.env</code>. Add one to enable real AI analysis;
+  otherwise placeholder reports are shown.
+</p>
+<h4>The frontend can't reach the backend</h4>
+<p>
+  Confirm the backend is running on port <code>5000</code> and that <code>NEXT_PUBLIC_BACKEND_URL</code> points to it.
+  Restart the frontend after changing env vars (they are read at startup).
+</p>
+<h4>Do I need sensors or hardware for the seller flow?</h4>
+<p>
+  No. Seller verification is fully software-based: enter weight and dimensions manually and upload or capture images.
+</p>
+<h4>The extension can't connect</h4>
+<p>
+  Ensure the backend is up and that the extension's host permissions cover the site you are browsing
+  (Amazon/Flipkart). Check the backend status indicator in the popup.
+</p>
+<h4>Product scraping returns nothing</h4>
+<p>
+  The scraper uses proxies/retries and headless-browser fallback. Slow or bot-walled sites may require
+  <code>SCRAPER_*</code> tuning variables or retrying.
+</p>
+<div class="footer">
+  LegalGuard User Guide &nbsp;•&nbsp; Team De-bug &nbsp;•&nbsp; Smart India Hackathon 2025
+</div>
+
+</div>
+</body>
+</html>

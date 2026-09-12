@@ -1,0 +1,256 @@
+Follow the same UI of my landing page and design the Dashboard of my page , first create a side Collapsible Navbar containing Dashboard , Check Compliance , Seller Verification , Products , Entities make sure to make the navbar perfectly so that it synced perfectly with the UI of my landing  page also for each pages show the active and the  inactive pages based on which page of the navbar i am currently in
+
+for each pages i will be creating separate page.jsx file in that specified named folder in my app folder
+
+but for now create a separate Navbar.jsx component having proper icons , following the same theme as my landing page perfect looking which will perfectly sync with my UI , and then create my CheckCompliance page.jsx
+
+In this  CheckCompliance page.jsx you need to call this following apis-
+
+at first there will be a input type text placeholder to add an url and a button Show Product , then by calling this api-
+
+http://localhost:5000/api/products/scrape
+
+make sure to properly follow this method-
+const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+NEXT_PUBLIC_BACKEND_URL will present in my .env file
+
+while calling this api-
+http://localhost:5000/api/products/scrape
+
+
+you will send a post request by sending the url as data like this way-
+
+curl --location 'http://localhost:5000/api/products/scrape' \
+--header 'Content-Type: application/json' \
+--data '{
+  "url": "https://www.amazon.in/Harry-Potter-Philosophers-Stone-MinaLima/dp/1526626586"
+}'
+
+and you are expected to receive this type of json-
+2 format type of json one for amazon and one for flipkart-
+
+Scrape Amazon Product
+http://localhost:5000/api/products/scrape
+{
+"images_downloaded": 5,
+"product": {
+"category": "Visionary & Metaphysical",
+"compliance_grade": null,
+"compliance_score": null,
+"country_of_origin": ": United Kingdom",
+"crawled_at": "Sat, 04 Oct 2025 22:15:16 GMT",
+"currency": "INR",
+"description": "An irresistible new edition of Harry Potter and the Philosopher's Stone created with ultra-talented designers MinaLima, the design magicians behind the gorgeous visual graphic style of the Harry Potter and Fantastic Beasts films. J.K. Rowling's complete and unabridged text is accompanied by MinaLima's handsome colour illustrations on nearly every page, superb design, and eight exclusive interactive paper-engineered elements - including Harry's Hogwarts letter, the magical entrance to Diagon Alley, a sumptuous feast in the Great Hall of Hogwarts and more.Designed and illustrated by the iconic house of MinaLima - best known for establishing the graphic design of the Harry Potter and Fantastic Beasts films - this is the perfect gift for Harry Potter fans and a beautiful addition to any collector's bookshelf, enticing readers of all ages to discover the Harry Potter novels all over again.",
+"dimensions": "22.86 x 4 x 15.24 cm",
+"generic_name": null,
+"id": 21,
+"importer": ": Atlantic Publishers and Distributors (P) Ltd., 7/22, Ansari Road, Darya Ganj, New Delhi - 110002 INDIA,",
+"importer_email": "customercare@atlanticbooks.com",
+"importer_phone": "011-47320500",
+"isbn_10": "1526626586",
+"isbn_13": "978-1526626585",
+"language": "English",
+"last_validated_at": null,
+"listed_price": "2067.00",
+"manufacturer": null,
+"marketplace": "Amazon",
+"packer": null,
+"page_count": 368,
+"product_id": "1526626586",
+"publisher": "Bloomsbury Children's Books",
+"rating": "4.7",
+"review_count": 7277,
+"seller": "Cocoblu Retail",
+"title": "Harry Potter and the Philosopher’s Stone: MinaLima Edition",
+"url": "https://www.amazon.in/Harry-Potter-Philosophers-Stone-MinaLima/dp/1526626586/ref=sr_1_9?sr=8-9",
+"weight": ": 1 kg 70 g"
+},
+"success": true
+}
+
+
+{
+  "url": "https://www.amazon.in/Harry-Potter-Philosophers-Stone-MinaLima/dp/1526626586"
+}
+
+
+and for
+
+Scrape Flipkart Product
+http://localhost:5000/api/products/scrape
+{
+"images_downloaded": 5,
+"product": {
+"category": "Smartphones",
+"compliance_grade": "B+",
+"compliance_score": "85.00",
+"country_of_origin": "India",
+"crawled_at": "Sat, 04 Oct 2025 22:37:36 GMT",
+"currency": "INR",
+"description": "About this item Massive 6000mAh Battery: Power through your day with a long-lasting battery designed for extended performance. MediaTek Dimensity 6300 5G: Enjoy fast and reliable 5G connectivity with a power-efficient processor. Ultra-Slim 7.94mm Design: Sleek and stylish profile that’s comfortable to hold and easy to carry. Smart AI Assist: Experience intelligent features that enhance your daily smartphone usage. IP64 Water & Dust Resistance: Built to endure everyday splashes and dust with certified durability. Get flagship-grade clarity and fluidity with a 120Hz refresh rate and immersive punch-hole screen. Camera Specification: 32MP rear + Flicker lens, 8MP front camera. › See more product details",
+"dimensions": "16.6 x 7.6 x 0.8 cm; 197 g",
+"generic_name": "Smartphone",
+"id": 23,
+"importer": null,
+"importer_email": null,
+"importer_phone": null,
+"isbn_10": null,
+"isbn_13": null,
+"language": null,
+"last_validated_at": "Sun, 05 Oct 2025 01:35:06 GMT",
+"listed_price": "9898.00",
+"manufacturer": "Padget Electronics Pvt Ltd",
+"marketplace": "Amazon",
+"packer": "Padget Electronics Pvt Ltd",
+"page_count": null,
+"product_id": "B0F9TT7Z5Q",
+"publisher": null,
+"rating": "4.2",
+"review_count": 1214,
+"seller": "Darshita Etel",
+"title": "realme NARZO 80 Lite 5G (Crystal Purple, 6GB+128GB) | 6000mAh Long-Lasting Battery | MediaTek Dimensity 6300 5G | AI Assist | IP64 Rated Water & Dust Resistance | Military-Grade Durability",
+"url": "https://www.amazon.in/realme-Long-Lasting-Resistance-Military-Grade-Durability/dp/B0F9TT7Z5Q?ref_=pd_hp_d_btf_unk_B0F9TT7Z5Q",
+"weight": "197 g"
+},
+"success": true
+}
+
+
+{
+  "url": "https://www.flipkart.com/lyphy-men-self-design-casual-white-shirt/p/itm7d9a39163a84e"
+}
+
+
+after receiving this data make sure to properly display all these datas in a perfect way you need to perfectly show all the details in a perfect manner containing each and every details perfectly showing each and everything with proper icons in a perfect way , The UI should be perfect containing each and every details in a very professional manner in a perfect UI modern looking UI syncing perfectly with my landing page and NavBar i want it to be absolutely perfect with no issues
+
+Now after getting the data you can see you get few datas like -
+
+"product_id": "B0F9TT7Z5Q",
+"title": "realme NARZO 80 Lite 5G (Crystal Purple, 6GB+128GB) | 6000mAh Long-Lasting Battery | MediaTek Dimensity 6300 5G | AI Assist | IP64 Rated Water & Dust Resistance | Military-Grade Durability"
+
+After you get those datas add another section containing the title and product_id and in that section Add a button name - View Compliance Report from OCR 
+
+then you need to call this api route-
+POST
+Validate Product (Vision + Gemini)
+http://localhost:5000/api/products/validate/{product_id}
+
+you will call the api like this way-
+http://localhost:5000/api/products/validate/B0F9TT7Z5Q
+
+while calling the api there will be a few seconds waiting time during that time in loading make sure to properly show the states like what is happening in my backend during this process of API calling i want this type of info mechanism loading section for both the api calls i will provide the detailed workflow at the end for now after calling this api you are expected to receive this type of json-
+
+🔹 Layout
+Use a grid-based two-column layout for each review card:
+Left column: Product image preview.
+Right column: OCR text, AI Vision insights, and compliance summary.
+Each image should have its own card. Multiple cards should align in a responsive grid.
+Cards should have smooth hover animations and neon-glow aesthetics.
+🔹 Image Preview (Left Column)
+Show the uploaded product image in a rounded-xl glowing bordered container.
+Hover effect: slight zoom-in with neon purple/cyan glowing edge.
+If OCR fails → show placeholder text: “⚠️ OCR could not extract text.”
+🔹 OCR Review Panel (Right Column, Top)
+Section title: “Extracted Text (OCR)”.
+Display extracted text in a scrollable, dark panel with a glowing scrollbar.
+Highlight compliance-critical fields:
+✅ Manufacturer
+✅ MRP
+✅ Net Weight
+Show green check icons when detected.
+If missing, show ⚠️ warning badges in red/orange.
+🔹 Vision AI Insights (Right Column, Middle)
+Section title: “AI Vision Insights”.
+Show labels with confidence scores as progress bars or glowing chips.
+Example:
+“Bottle – 92%”
+“Text – 81%”
+If confidence < 60%, display the label in a faded or warning style.
+🔹 Final Compliance Review (Right Column, Bottom)
+Section title: “Compliance Summary”.
+Display a concise AI-generated summary for each image:
+Example: “MRP missing. Manufacturer not detected. Product packaging is non-compliant.”
+Style:
+✅ If compliant → glowing green box with a check icon.
+⚠️ If issues → glowing red/orange box with a warning icon.
+🔹 Styling
+Theme: Futuristic, dark mode, cyber/neon vibe (purple + cyan gradients).
+Card design: Rounded-xl, blurred glassmorphism backgrounds, soft neon shadows.
+Typography: Use Poppins font (uppercase for section titles, regular for body text).
+Animations:
+Smooth fade-in and slide animations (Framer Motion).
+Hover effects: scale-up and glow intensification.
+Expandable panels for long OCR text if needed.
+🔹 Responsiveness
+On desktop: 2-column layout (Image | Review).
+On mobile: Stack vertically with image on top and review below.
+🔹 Goal
+
+Make compliance reviews clear, professional, and futuristic-looking, so users can instantly:
+
+See the uploaded product photo.
+Verify OCR-extracted text.
+Understand AI Vision detections.
+Read a final compliance verdict at a glance.
+
+
+
+For each uploaded product image, design a **futuristic review card** that includes:
+
+1. **Image Preview**
+
+   * Display the uploaded image in a **glowing bordered card**.
+   * Hover effect: zoom-in with neon edge glow.
+   * If OCR failed → show placeholder “⚠️ Could not extract text.”
+
+2. **OCR Review Panel (Right Side of Image)**
+
+   * **Title:** “Extracted Text (OCR)”
+   * Show the extracted text in a styled scrollable box (dark background with glowing scrollbar).
+   * Highlight **detected compliance fields**:
+
+     * ✅ Manufacturer, MRP, Net Weight → show green check badge if detected.
+     * ⚠️ Show red/orange warning badge if missing.
+
+3. **Vision AI Review Panel**
+
+   * **Title:** “AI Vision Insights”
+   * Show labels with confidence (use progress bars or glowing chips).
+   * Example:
+
+     * “Bottle – 92%”
+     * “Text – 81%”
+   * If confidence < 60%, show faded warning style.
+
+4. **Final Review Summary (Footer of Card)**
+
+   * Short AI-generated comment per image:
+
+     * e.g., “MRP missing, Manufacturer not detected. Product packaging is non-compliant.”
+   * Style: glowing callout box with ⚠️ or ✅ icons.
+
+5. **Layout**
+
+   * **Grid layout**:
+
+     * Left = Image preview
+     * Right = OCR text + Vision labels + Final review
+   * Use collapsible/expandable panels for cleaner UI if needed.
+
+6. **Styling**
+
+   * Dark theme, neon purple/cyan accents.
+   * Rounded-xl cards with hover shadows.
+   * Smooth expand/collapse animations (Framer Motion).
+
+---
+
+**Goal:**
+Make sure every image uploaded is **paired with its OCR-extracted text and AI review** so compliance reviewers can clearly see what’s missing or incorrect **directly alongside the product photo**.
+ 
+
+Make sure i want my UI to be very professional looking keeping everything clean compact and perfect looking with a modern looking UI 
+
+
+
+ 

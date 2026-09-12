@@ -1,0 +1,74 @@
+/*
+ * Styles for the Leaflet/OpenStreetMap violation heatmap
+ * (frontend/components/ViolationHeatmap.tsx).
+ */
+
+/* Map container: own stacking context so Leaflet panes never cover page UI */
+.violation-heatmap {
+  background: #0a0a0a;
+  z-index: 0;
+}
+
+.violation-heatmap .leaflet-container {
+  background: #0a0a0a;
+}
+
+/* Dark look for the standard (light) OSM raster tiles, matching the app theme */
+.violation-heatmap .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(185deg) brightness(0.9) contrast(0.85) saturate(0.7);
+}
+
+/* Attribution must stay readable on the dark UI */
+.violation-heatmap .leaflet-control-attribution {
+  background: rgba(0, 0, 0, 0.7) !important;
+  color: #9ca3af !important;
+  font-size: 10px;
+}
+
+.violation-heatmap .leaflet-control-attribution a {
+  color: #a78bfa !important;
+}
+
+/* Colored score markers (L.divIcon dots) */
+.violation-marker {
+  background: transparent;
+  border: none;
+}
+
+.violation-marker__dot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 9999px;
+  border: 2px solid #ffffff;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  line-height: 1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
+}
+
+/* Dark popups */
+.violation-heatmap .leaflet-popup-content-wrapper,
+.violation-heatmap .leaflet-popup-tip {
+  background: #0a0a0a;
+  color: #ffffff;
+  border: 1px solid rgba(168, 85, 247, 0.45);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.65);
+}
+
+.violation-heatmap .leaflet-popup-content {
+  margin: 12px 16px;
+  line-height: 1.5;
+}
+
+.violation-heatmap .leaflet-popup-close-button {
+  color: #9ca3af !important;
+}
+
+.violation-heatmap .leaflet-marker-icon {
+  cursor: pointer;
+}

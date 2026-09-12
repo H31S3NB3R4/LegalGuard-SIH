@@ -1,0 +1,60 @@
+CREATE TABLE `images` (
+  `image_id` int NOT NULL AUTO_INCREMENT,
+  `product_id` int NOT NULL,
+  `image_data` longblob NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`image_id`),
+  KEY `idx_product_id` (`product_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=80 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE `products` (
+  `product_id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `url` varchar(1000) NOT NULL,
+  `asin` varchar(50) NOT NULL,
+  `title` text,
+  `price` decimal(10,2) DEFAULT NULL,
+  `currency` varchar(10) DEFAULT NULL,
+  `country` varchar(50) DEFAULT NULL,
+  `language` varchar(50) DEFAULT NULL,
+  `seller_information` json DEFAULT NULL,
+  `product_json` json DEFAULT NULL,
+  `analysis_results` text,
+  `rating` decimal(3,2) DEFAULT NULL,
+  `remarks` text,
+  `last_analysed` datetime DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`product_id`),
+  UNIQUE KEY `asin` (`asin`),
+  KEY `idx_asin` (`asin`),
+  KEY `idx_user_id` (`user_id`)
+)
+
+CREATE TABLE `selleractivity` (
+  `activity_id` int NOT NULL AUTO_INCREMENT,
+  `seller_id` int NOT NULL COMMENT 'The seller who owns the scraped product',
+  `customer_id` int DEFAULT NULL COMMENT 'The customer who scraped the product (NULL if seller scraped own product)',
+  `action` varchar(500) NOT NULL,
+  `seller_information` json DEFAULT NULL,
+  `location` varchar(255) DEFAULT NULL COMMENT 'Geographic location for heatmap generation',
+  `latitude` decimal(10,8) DEFAULT NULL COMMENT 'Latitude coordinate',
+  `longitude` decimal(11,8) DEFAULT NULL COMMENT 'Longitude coordinate',
+  `timestamp` datetime NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`activity_id`),
+  KEY `idx_seller_id` (`seller_id`),
+  KEY `idx_customer_id` (`customer_id`),
+  KEY `idx_timestamp` (`timestamp`),
+  KEY `idx_location` (`latitude`,`longitude`)
+)
+
+CREATE TABLE `users` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `username` varchar(255) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `role` enum('customer','seller') NOT NULL DEFAULT 'customer',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `username` (`username`)
+)

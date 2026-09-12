@@ -1,0 +1,48 @@
+# ============================================================================
+# LegalGuard — one-command local stack (matches the creds in .env)
+# ----------------------------------------------------------------------------
+#   docker compose up -d
+#
+# Brings up MySQL 8 on host port 3307 with the exact credentials that
+# legal_metrology_backend/legal_metrology/.env already uses:
+#     DB_HOST=127.0.0.1  DB_PORT=3307  DB_USER=legalguard
+#     DB_PASSWORD=legalguard#2026       DB_NAME=amazon_scraper_db
+#
+# The canonical schema is loaded automatically on first start
+# (./legal_metrology_backend/legal_metrology/database_schema.sql).
+#
+# Note: `lower_case_table_names=1` is set so the app's mixed-case table names
+# (Users/Products/selleractivity) work identically on Linux (Linux MySQL is
+# case-sensitive by default; Windows is not).
+# ============================================================================
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: legalguard-mysql
+    restart: unless-stopped
+    command:
+      - --default-authentication-plugin=mysql_native_password
+      - --lower_case_table_names=1
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: amazon_scraper_db
+      MYSQL_USER: legalguard
+      MYSQL_PASSWORD: "legalguard#2026"
+    ports:
+      - "3307:3306"     # host 3307 -> container 3306 (host 3307 is what .env uses)
+    volumes:
+      - legalguard_mysql_data:/var/lib/mysql
+      # Load the canonical schema on first boot (only runs when data dir is empty):
+      - ./legal_metrology_backend/legal_metrology/database_schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-ulegalguard", "-plegalguard#2026"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 15s
+
+volumes:
+  legalguard_mysql_data:

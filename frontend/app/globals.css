@@ -1,0 +1,62 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200..700&display=swap');
+
+body {
+  font-family: 'Poppins', sans-serif;
+}
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+
+.stack-sans {
+  font-family: "Stack Sans Notch";
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+@font-face {
+  font-family: 'Cy Grotesk Key';
+  src: url('/fonts/kobuzan-cy-grotesk-grand-dark.otf') format('opentype'),
+       url('/fonts/kobuzan-cy-grotesk-grand-dark.otf') format('opentype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+.cy-grotesk {
+  font-family: 'Cy Grotesk Key', sans-serif;
+}
+
+.glass-effect{
+ position: absolute;
+ z-index: 0;
+ inset: 0;
+ backdrop-filter: blur(3px);
+ filter: url(#glass-distortion);
+ overflow: hidden;
+ isolation: isolate;
+}
