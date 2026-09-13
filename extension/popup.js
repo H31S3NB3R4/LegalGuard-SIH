@@ -21,7 +21,7 @@ let selectedRole = 'customer';
 const backendDot = document.getElementById('backendDot');
 const statusText = document.getElementById('statusText');
 const toggleBtn = document.getElementById('toggleBtn');
-const toggleIcon = document.getElementById('pd-toggle-icon');
+const toggleDot = document.getElementById('pd-toggle-dot');
 const toggleText = document.getElementById('toggleText');
 const logsContainer = document.getElementById('logsContainer');
 const demoBanner = document.getElementById('demoBanner');
@@ -54,25 +54,23 @@ function addLog(message, type = 'info') {
 function updateBackendStatus(status) {
   if (status === 'online') {
     backendDot.classList.remove('inactive');
-    statusText.textContent = '🟢 Backend Connected';
+    statusText.textContent = 'Backend connected';
     addLog('Backend is online', 'success');
   } else {
     backendDot.classList.add('inactive');
-    statusText.textContent = '⚫ Backend Offline';
+    statusText.textContent = 'Backend offline';
     addLog('Backend is offline', 'error');
   }
 }
 
 function updateToggleUI(enabled) {
   if (enabled) {
-    toggleIcon.textContent = '🟢';
-    toggleText.textContent = 'Disable Extension';
-    toggleBtn.style.background = 'rgba(16, 185, 129, 0.3)';
+    toggleBtn.classList.add('enabled');
+    toggleText.textContent = 'Disable extension';
     addLog('Extension enabled', 'success');
   } else {
-    toggleIcon.textContent = '🔴';
-    toggleText.textContent = 'Enable Extension';
-    toggleBtn.style.background = 'rgba(103, 126, 234, 0.3)';
+    toggleBtn.classList.remove('enabled');
+    toggleText.textContent = 'Enable extension';
     addLog('Extension disabled', 'info');
   }
 }

@@ -1,16 +1,21 @@
 /*
  * Styles for the Leaflet/OpenStreetMap violation heatmap
  * (frontend/components/ViolationHeatmap.tsx).
+ *
+ * Map chrome follows the LegalGuard design tokens (frontend/design.md):
+ * the marker/popup chrome uses surface/border token colors, while the
+ * raster tiles keep their dark filter so the map reads as-is (tododesign
+ * Phase 5: "the map tiles themselves can stay as-is").
  */
 
 /* Map container: own stacking context so Leaflet panes never cover page UI */
 .violation-heatmap {
-  background: #0a0a0a;
+  background: #111827; /* token: text-primary — dark base under the tiles */
   z-index: 0;
 }
 
 .violation-heatmap .leaflet-container {
-  background: #0a0a0a;
+  background: #111827;
 }
 
 /* Dark look for the standard (light) OSM raster tiles, matching the app theme */
@@ -18,18 +23,36 @@
   filter: invert(1) hue-rotate(185deg) brightness(0.9) contrast(0.85) saturate(0.7);
 }
 
-/* Attribution must stay readable on the dark UI */
+/* Attribution must stay readable on the dark tiles */
 .violation-heatmap .leaflet-control-attribution {
-  background: rgba(0, 0, 0, 0.7) !important;
-  color: #9ca3af !important;
+  background: rgba(17, 24, 39, 0.85) !important;
+  color: #9ca3af !important; /* token: text-muted */
   font-size: 10px;
 }
 
 .violation-heatmap .leaflet-control-attribution a {
-  color: #a78bfa !important;
+  color: #6c5ce7 !important; /* token: accent-primary */
 }
 
-/* Colored score markers (L.divIcon dots) */
+/* Zoom controls restyled with the token palette */
+.violation-heatmap .leaflet-control-zoom a {
+  background: #ffffff !important; /* token: bg-surface */
+  color: #6b7280 !important; /* token: text-secondary */
+  border: 1px solid #e5e7eb !important; /* token: border-default */
+  border-radius: 999px !important; /* token: pill radius */
+  width: 30px !important;
+  height: 30px !important;
+  line-height: 28px !important;
+  font-weight: 600 !important;
+}
+
+.violation-heatmap .leaflet-control-zoom a:hover {
+  color: #111827 !important; /* token: text-primary */
+  background: #f8f9fb !important; /* token: bg-page */
+}
+
+/* Colored score markers (L.divIcon dots) — colors come from the
+ * success/warning/critical token scale by value (set by the parent page). */
 .violation-marker {
   background: transparent;
   border: none;
@@ -41,23 +64,24 @@
   justify-content: center;
   width: 28px;
   height: 28px;
-  border-radius: 9999px;
-  border: 2px solid #ffffff;
+  border-radius: 9999px; /* token: pill */
+  border: 2px solid #ffffff; /* token: bg-surface */
   color: #ffffff;
   font-size: 11px;
   font-weight: 700;
-  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
   line-height: 1;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.06); /* token: card shadow */
 }
 
-/* Dark popups */
+/* Popups restyled as design-system cards (surface + border tokens) */
 .violation-heatmap .leaflet-popup-content-wrapper,
 .violation-heatmap .leaflet-popup-tip {
-  background: #0a0a0a;
-  color: #ffffff;
-  border: 1px solid rgba(168, 85, 247, 0.45);
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.65);
+  background: #ffffff; /* token: bg-surface */
+  color: #111827; /* token: text-primary */
+  border: 1px solid #e5e7eb; /* token: border-default */
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.06); /* token: card shadow */
+  border-radius: 12px; /* token: card radius */
 }
 
 .violation-heatmap .leaflet-popup-content {
@@ -66,9 +90,16 @@
 }
 
 .violation-heatmap .leaflet-popup-close-button {
-  color: #9ca3af !important;
+  color: #9ca3af !important; /* token: text-muted */
 }
 
 .violation-heatmap .leaflet-marker-icon {
   cursor: pointer;
 }
+
+/* Empty-state overlay on the map uses the token palette too */
+.violation-heatmap-empty {
+  background: rgba(248, 249, 251, 0.92); /* token: bg-page */
+  color: #6b7280; /* token: text-secondary */
+}
+

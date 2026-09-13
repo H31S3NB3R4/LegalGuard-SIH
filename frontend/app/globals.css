@@ -1,43 +1,77 @@
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200..700&display=swap');
 
-body {
-  font-family: 'Poppins', sans-serif;
-}
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* ==========================================================================
+   LegalGuard design tokens — frontend/design.md (section 1) is the source of
+   truth. Do NOT introduce colors, radii, shadows or spacing values that are
+   not listed there; if something is not covered, match the closest existing
+   pattern instead of inventing a new one.
 
+   Tailwind CSS v4 is configured CSS-first: this @theme block IS the theme
+   config (there is no tailwind.config file). Every token below becomes a
+   utility class, e.g. bg-surface, text-secondary, border-default,
+   rounded-card, shadow-card, bg-cat-food.
+   ========================================================================== */
+@theme {
+  /* Color */
+  --color-page: #F8F9FB; /* bg-page */
+  --color-surface: #FFFFFF; /* bg-surface */
+  --color-default: #E5E7EB; /* border-default */
+  --color-primary: #111827; /* text-primary */
+  --color-secondary: #6B7280; /* text-secondary */
+  --color-muted: #9CA3AF; /* text-muted */
+  --color-accent: #6C5CE7; /* accent-primary */
+  --color-nav-active: #16181D; /* accent-nav-active */
+  --color-success: #16A34A;
+  --color-warning: #D97706;
+  --color-critical: #DC2626;
+  --color-track: #EEF0F4; /* ring-track */
 
-.stack-sans {
-  font-family: "Stack Sans Notch";
-  font-optical-sizing: auto;
-  font-weight: 400;
-  font-style: normal;
+  /* Category accent colors (per product category, like Scrut per-framework) */
+  --color-cat-food: #16A34A;
+  --color-cat-electronics: #2563EB;
+  --color-cat-skincare: #DB2777;
+  --color-cat-books: #D97706;
+  --color-cat-generic: #6B7280;
+
+  /* Radius */
+  --radius-card: 12px;
+  --radius-pill: 999px;
+  --radius-tile: 8px;
+
+  /* Shadow (subtle — borders do most of the work, not shadow) */
+  --shadow-card: 0 1px 3px rgba(16, 24, 40, 0.06);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Typography: Inter is loaded via next/font in app/layout.js (--font-inter) */
+  --font-sans: var(--font-inter), Inter, ui-sans-serif, system-ui, sans-serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-page);
+  color: var(--color-primary);
 }
 
+/* Thin, unobtrusive scrollbars for panel interiors (maps, chat, lists) */
+.thin-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.thin-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.thin-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--color-default);
+  border-radius: 10px;
+}
+.thin-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--color-muted);
+}
+
+/* ---------------------------------------------------------------------------
+   Legacy helpers below — used by the marketing landing page (app/page.js),
+   which is intentionally outside the design-system reskin. Keep as-is.
+   --------------------------------------------------------------------------- */
 @font-face {
   font-family: 'Cy Grotesk Key';
   src: url('/fonts/kobuzan-cy-grotesk-grand-dark.otf') format('opentype'),
@@ -51,12 +85,19 @@ body {
   font-family: 'Cy Grotesk Key', sans-serif;
 }
 
-.glass-effect{
- position: absolute;
- z-index: 0;
- inset: 0;
- backdrop-filter: blur(3px);
- filter: url(#glass-distortion);
- overflow: hidden;
- isolation: isolate;
+.stack-sans {
+  font-family: "Stack Sans Notch";
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.glass-effect {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  backdrop-filter: blur(3px);
+  filter: url(#glass-distortion);
+  overflow: hidden;
+  isolation: isolate;
 }

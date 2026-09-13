@@ -76,12 +76,10 @@ export default function SignupPage() {
           localStorage.setItem('username', loginData.user.username);
           localStorage.setItem('isAuthenticated', 'true');
 
-          // 🎯 ROLE BASED REDIRECT
-          if (userRole === "seller") {
-            router.push(`/seller-verification?userId=${userId}&role=${userRole}`);
-          } else {
-            router.push(`/dashboard?userId=${userId}&role=${userRole}`);
-          }
+          // 🎯 ROLE BASED REDIRECT — sellers land on the dashboard first (the
+          // seller sidebar + context switcher give them one-click access to
+          // the pre-upload validator from there).
+          router.push(`/dashboard?userId=${userId}&role=${userRole}`);
 
         } else {
           setSuccess(true);

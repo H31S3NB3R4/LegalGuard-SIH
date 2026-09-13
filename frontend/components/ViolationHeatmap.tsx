@@ -96,11 +96,12 @@ function HeatOverlay({
           blur: 15,
           maxZoom: 10,
           gradient: {
-            0.0: 'rgba(0, 255, 0, 0)',
-            0.25: 'rgba(34, 197, 94, 0.5)',
-            0.5: 'rgba(234, 179, 8, 0.9)',
-            0.75: 'rgba(249, 115, 22, 1)',
-            1.0: 'rgba(239, 68, 68, 1)',
+            // Design tokens (design.md §1): success → warning → critical scale.
+            0.0: 'rgba(22, 163, 74, 0)', // success, transparent
+            0.4: 'rgba(22, 163, 74, 0.45)', // success ≥ 80
+            0.6: 'rgba(217, 119, 6, 0.8)', // warning 40–79
+            0.8: 'rgba(217, 119, 6, 1)', // warning (hot)
+            1.0: 'rgba(220, 38, 38, 1)', // critical < 40
           },
         }
       ).addTo(map);
@@ -231,11 +232,11 @@ export default function ViolationHeatmap({
       </MapContainer>
 
       {!loading && markers.length === 0 && (
-        <div className="absolute inset-0 z-[500] flex flex-col items-center justify-center gap-3 bg-black/60 pointer-events-none rounded-2xl">
-          <span className="text-sm uppercase tracking-widest text-gray-400">
+        <div className="absolute inset-0 z-[500] flex flex-col items-center justify-center gap-3 bg-page/95 pointer-events-none rounded-card">
+          <span className="text-sm uppercase tracking-widest text-secondary font-medium">
             No mappable locations yet
           </span>
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-muted">
             Location coordinates appear once geocoded data is available
           </span>
         </div>

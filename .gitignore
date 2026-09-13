@@ -21,3 +21,6 @@ node_modules/
 dist/
 build/
 *.log
+
+# local backup of the pre-redesign dark theme pages (already in git history)
+frontend/_backup_dark_theme/

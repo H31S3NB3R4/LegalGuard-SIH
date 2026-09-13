@@ -1,207 +1,298 @@
-/* LegalGuard Sticky Overlay */
+/*
+ * LegalGuard on-page overlay - tododesign Phase 8.
+ * Compact grade badge + one-line status (design.md token palette),
+ * expandable to a condensed version of the Phase 3 report layout.
+ * Tokens: bg-surface #FFF, border #E5E7EB, text #111827, text-secondary
+ * #6B7280, accent #6C5CE7, success #16A34A, warning #D97706, critical
+ * #DC2626, card radius 12px, pill 999px, card shadow 0 1px 3px
+ * rgba(16,24,40,0.06).
+ */
 #legalguard-overlay {
   position: fixed;
   top: 20px;
   right: 20px;
-  width: 360px;
+  width: 340px;
   z-index: 2147483647;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  transition: all 0.3s ease;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+  transition: all 0.2s ease;
 }
 
 #legalguard-overlay * {
   box-sizing: border-box;
 }
 
+/* Card - surface + border tokens, card radius + shadow */
 .legalguard-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 20px;
-  padding: 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  color: white;
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.06);
+  color: #111827;
 }
 
 .legalguard-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .legalguard-title {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 18px;
-  font-weight: 700;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .legalguard-logo {
-  width: 32px;
-  height: 32px;
-  background: white;
-  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+  background: #16181D; /* accent-nav-active */
+  border-radius: 8px; /* small icon tile radius */
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #667eea;
-  font-weight: bold;
+  color: #FFFFFF;
+  font-weight: 700;
+  font-size: 13px;
 }
 
 .legalguard-close {
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
-  color: white;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  color: #6B7280;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px; /* pill */
   cursor: pointer;
-  font-size: 18px;
+  font-size: 15px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.2s;
+  transition: all 0.15s;
 }
 
 .legalguard-close:hover {
-  background: rgba(255, 255, 255, 0.3);
+  color: #111827;
+  border-color: #9CA3AF;
 }
 
+/* Content panel - page background inset */
 .legalguard-content {
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
-  border-radius: 14px;
-  padding: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: #F8F9FB;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 14px;
 }
 
 .legalguard-status {
   text-align: center;
-  font-size: 15px;
-  font-weight: 600;
-  margin-bottom: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 10px;
+  color: #6B7280;
 }
 
 .legalguard-progress {
   width: 100%;
-  height: 6px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 10px;
-  overflow: hidden;
-  margin-bottom: 12px;
-}
-
-.legalguard-progress-bar {
-  height: 100%;
-  background: white;
-  border-radius: 10px;
-  transition: width 0.3s ease;
-  width: 0%;
-}
-
-.legalguard-details {
-  font-size: 13px;
-  opacity: 0.9;
-  line-height: 1.5;
-}
 
 .legalguard-result {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
+/* Compact grade badge + one-line status row (Phase 8 requirement) */
 .legalguard-grade {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 12px;
 }
 
 .legalguard-grade-badge {
-  width: 60px;
-  height: 60px;
-  background: white;
-  color: #667eea;
-  border-radius: 50%;
+  width: 52px;
+  height: 52px;
+  background: #6C5CE7; /* accent-primary */
+  color: #FFFFFF;
+  border-radius: 12px; /* card radius - compact badge tile */
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 28px;
-  font-weight: 800;
+  font-size: 24px;
+  font-weight: 700;
+  flex-shrink: 0;
 }
 
-/* Phase 12: indeterminate analysis (grade N/A) — neutral gray badge. */
+/* Grade colors follow the success/warning/critical token scale */
+.legalguard-grade-badge.legalguard-pass {
+  background: #16A34A; /* success */
+}
+
+.legalguard-grade-badge.legalguard-warn {
+  background: #D97706; /* warning */
+}
+
+.legalguard-grade-badge.legalguard-fail {
+  background: #DC2626; /* critical */
+}
+
+/* Phase 12: indeterminate analysis (grade N/A) - neutral muted badge. */
 .legalguard-grade-badge.legalguard-na {
-  background: rgba(255, 255, 255, 0.25);
-  color: #d1d5db;
-  font-size: 22px;
+  background: #F8F9FB;
+  color: #9CA3AF;
+  border: 1px solid #E5E7EB;
+  font-size: 20px;
+}
+
+.legalguard-score {
+  font-size: 15px;
+  font-weight: 600;
 }
 
 .legalguard-na-note {
   font-size: 11px;
-  opacity: 0.85;
+  color: #9CA3AF;
   max-width: 220px;
-  margin-top: 4px;
-  text-align: center;
-  line-height: 1.3;
-}
 
-.legalguard-score {
-  font-size: 16px;
-  font-weight: 600;
-}
-
+/* Condensed report (mini Phase 3 stats + checklist summary) */
 .legalguard-stats {
   display: flex;
-  gap: 10px;
+  gap: 8px;
 }
 
 .legalguard-stat {
   flex: 1;
-  background: rgba(255, 255, 255, 0.1);
-  padding: 10px;
-  border-radius: 10px;
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 8px;
   text-align: center;
 }
 
 .legalguard-stat-value {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
+
+.legalguard-stat-value.legalguard-ok { color: #16A34A; }
+.legalguard-stat-value.legalguard-bad { color: #DC2626; }
 
 .legalguard-stat-label {
-  font-size: 11px;
-  opacity: 0.8;
+  font-size: 10px;
+  color: #6B7280;
 }
 
+/* Primary pill button (Review-button equivalent) */
 .legalguard-button {
   width: 100%;
-  padding: 12px;
-  background: white;
-  color: #667eea;
+  height: 36px;
+  background: #6C5CE7;
+  color: #FFFFFF;
   border: none;
-  border-radius: 10px;
+  border-radius: 999px; /* pill */
   font-weight: 600;
-  font-size: 14px;
+  font-size: 13px;
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: opacity 0.15s;
 }
 
 .legalguard-button:hover {
-  transform: translateY(-2px);
+  opacity: 0.9;
 }
 
-/* Minimized state */
+/* Minimized state - just the compact grade badge + one line */
 #legalguard-overlay.minimized {
   width: auto;
 }
 
 #legalguard-overlay.minimized .legalguard-card {
-  padding: 12px 16px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#legalguard-overlay.minimized .legalguard-header {
+  display: none;
 }
 
 #legalguard-overlay.minimized .legalguard-content {
   display: none;
+}
+
+#legalguard-overlay.minimized .legalguard-mini {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.legalguard-mini {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.legalguard-mini-badge {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  font-size: 16px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.legalguard-mini-badge.legalguard-pass { background: #16A34A; }
+.legalguard-mini-badge.legalguard-warn { background: #D97706; }
+.legalguard-mini-badge.legalguard-fail { background: #DC2626; }
+.legalguard-mini-badge.legalguard-na {
+  background: #F8F9FB;
+  color: #9CA3AF;
+  border: 1px solid #E5E7EB;
+}
+
+.legalguard-mini-line {
+  font-size: 12px;
+  font-weight: 600;
+  color: #111827;
+  white-space: nowrap;
+}
+
+.legalguard-mini-line span {
+  display: block;
+  font-size: 10px;
+  font-weight: 500;
+  color: #6B7280;
+}
+
+  margin-top: 3px;
+  line-height: 1.4;
+}
+
+  height: 5px;
+  background: #EEF0F4; /* ring-track */
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.legalguard-progress-bar {
+  height: 100%;
+  background: #6C5CE7; /* accent-primary */
+  border-radius: 999px;
+  transition: width 0.3s ease;
+  width: 0%;
+}
+
+.legalguard-details {
+  font-size: 12px;
+  color: #6B7280;
+  line-height: 1.5;
 }

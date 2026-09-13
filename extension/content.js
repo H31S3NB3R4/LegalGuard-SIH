@@ -44,31 +44,41 @@ function isProductPage() {
 // Create sticky overlay
 function createOverlay() {
   if (overlayElement) return;
-  
+
   overlayElement = document.createElement('div');
   overlayElement.id = 'legalguard-overlay';
   overlayElement.innerHTML = `
     <div class="legalguard-card">
       <div class="legalguard-header">
         <div class="legalguard-title">
-          <div class="legalguard-logo">M</div>
+          <div class="legalguard-logo">L</div>
           <span>LegalGuard</span>
         </div>
-        <button class="legalguard-close" id="legalguard-close">×</button>
+        <button class="legalguard-close" id="legalguard-close">&#215;</button>
       </div>
       <div class="legalguard-content" id="legalguard-content">
         <div class="legalguard-status" id="legalguard-status">Ready to check compliance</div>
       </div>
+      <div class="legalguard-mini" id="legalguard-mini"></div>
     </div>
   `;
-  
-  document.body.appendChild(overlayElement);
-  
-  document.getElementById('legalguard-close').addEventListener('click', () => {
-    overlayElement.classList.toggle('minimized');
-  });
-}
 
+  document.body.appendChild(overlayElement);
+
+  const closeButton = document.getElementById('legalguard-close');
+  if (closeButton) {
+    closeButton.addEventListener('click', () => {
+      overlayElement.classList.add('minimized');
+    });
+  }
+  // Compact badge row re-expands the condensed report.
+  const miniRow = document.getElementById('legalguard-mini');
+  if (miniRow) {
+    miniRow.addEventListener('click', () => {
+      overlayElement.classList.remove('minimized');
+    });
+  }
+}
 function removeOverlay() {
   if (overlayElement) {
     overlayElement.remove();
@@ -100,41 +110,76 @@ function showError(message) {
 }
 
 function showResult(data) {
-  // Phase 12: N/A grade (indeterminate analysis) renders gray with an
+  // Phase 12: N/A grade (indeterminate analysis) renders muted with an
   // explanatory line instead of a scary red F / 0%.
   const isNA = (data.final_grade === 'N/A' || data.final_grade === 'NA');
-  const scoreText = (data.compliance_score == null) ? 'Not graded' : `Score: ${data.compliance_score}%`;
+  const score = Number(data.compliance_score);
+  // Badge color follows the design.md token scale by value:
+  // >= 80 success, 40-79 warning, < 40 critical.
+  const scoreClass = isNA
+    ? 'legalguard-na'
+    : score >= 80
+      ? 'legalguard-pass'
+      : score >= 40
+        ? 'legalguard-warn'
+        : 'legalguard-fail';
+  const scoreText = data.compliance_score == null
+    ? 'Not graded'
+    : `Score: ${data.compliance_score}%`;
+  const oneLine = isNA
+    ? 'Analysis pending'
+    : score >= 80
+      ? 'Compliant listing'
+      : score >= 40
+        ? 'Needs attention'
+        : 'Non-compliant listing';
+  const passed = data.passed_checks || 0;
+  const failed = Math.max(0, (data.total_checks || 0) - passed);
   updateOverlay(`
     <div class="legalguard-result">
       <div class="legalguard-grade">
-        <div class="legalguard-grade-badge ${isNA ? 'legalguard-na' : ''}">${data.final_grade || 'N/A'}</div>
-        <div class="legalguard-score">${scoreText}</div>
-        ${isNA ? '<div class="legalguard-na-note">AI service was unavailable (quota) — re-run later for a real grade.</div>' : ''}
+        <div class="legalguard-grade-badge ${scoreClass}">${data.final_grade || 'N/A'}</div>
+        <div>
+          <div class="legalguard-score">${scoreText}</div>
+          <div class="legalguard-na-note">${oneLine}</div>
+        </div>
       </div>
       <div class="legalguard-stats">
         <div class="legalguard-stat">
-          <div class="legalguard-stat-value">${data.passed_checks || 0}</div>
+          <div class="legalguard-stat-value legalguard-ok">${passed}</div>
           <div class="legalguard-stat-label">Passed</div>
         </div>
         <div class="legalguard-stat">
+          <div class="legalguard-stat-value legalguard-bad">${failed}</div>
+          <div class="legalguard-stat-label">Failed</div>
+        </div>
+        <div class="legalguard-stat">
           <div class="legalguard-stat-value">${data.total_checks || 0}</div>
-          <div class="legalguard-stat-label">Total</div>
+          <div class="legalguard-stat-label">Checks</div>
         </div>
       </div>
-      <button class="legalguard-button" id="legalguard-view-report">View Full Report</button>
+      <button class="legalguard-button" id="legalguard-view-report">View full report</button>
     </div>
   `);
-  
+
+  // Compact badge shown when minimized (Phase 8: compact grade badge +
+  // one-line status).
+  const miniRow = document.getElementById('legalguard-mini');
+  if (miniRow) {
+    miniRow.innerHTML = `
+      <div class="legalguard-mini-badge ${scoreClass}">${data.final_grade || 'N/A'}</div>
+      <div class="legalguard-mini-line">${oneLine}<span>${scoreText}</span></div>
+    `;
+  }
+
   const viewReportBtn = document.getElementById('legalguard-view-report');
   if (viewReportBtn) {
-    // Get user info from storage
     chrome.storage.sync.get(['userId', 'userRole'], (storage) => {
-      const userId = storage.userId || 3; // fallback to 3 as in your example
-      const userRole = storage.userRole || 'customer'; // fallback to 'customer'
-      
+      const userId = storage.userId || 3;
+      const userRole = storage.userRole || 'customer';
       viewReportBtn.addEventListener('click', () => {
         window.open(
-          `http://localhost:3000/products?userId=${userId}&role=${userRole}&productId=${data.product_id}`, 
+          `http://localhost:3000/products/${data.product_id}?userId=${userId}&role=${userRole}`,
           '_blank'
         );
       });

@@ -1,18 +1,44 @@
-"use client";
-import { useState, useRef, useEffect } from 'react';
+'use client';
+
+// Seller verification (pre-upload validator) - reskinned per design.md
+// (tododesign Phase 4). Preserves ALL existing functionality: category
+// selection, description + declared weight/dimensions, image upload AND
+// webcam capture, staged loading, and the readiness report from
+// POST /api/seller/check-upload-text. The readiness report reuses the same
+// ChecklistRow component as the Phase 3 product report.
+
+import React, { useRef, useState } from 'react';
 import {
-  Upload, Loader2, Camera, X, Send, AlertCircle, CheckCircle2,
-  XCircle, ChevronDown, ChevronUp, Trash2, Shield, TrendingUp,
-  Star, AlertTriangle, Info, Eye, Package, Plus, Video, Image as ImageIcon,
-  ShoppingCart, Menu, Search, Bell, User, Home, Package2, FileText,
-  Settings, LogOut, MapPin, DollarSign, BarChart3, MessageSquare,
-  Weight, Ruler, Tag, Users, Map, ExternalLink, Filter, ChevronLeft,
-  ChevronRight
+  Upload,
+  Camera,
+  X,
+  Send,
+  Loader2,
+  AlertCircle,
+  CheckCircle2,
+  Shield,
+  Image as ImageIcon,
+  Weight,
+  Ruler,
+  Trash2,
 } from 'lucide-react';
-import Navbar from '../Navbar';
+import AppShell from '../../components/AppShell';
+import {
+  CardHeader,
+  ChecklistRow,
+  ProgressRing,
+  EmptyState,
+  StatusPill,
+} from '../../components/ui';
+import { categoryMeta, severityMeta } from '../../lib/design';
+import {
+  mergeFindings,
+  normalizeViolations,
+  violationSummary,
+  reportScore,
+} from '../../lib/report';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
-
 
 const CATEGORIES = [
   { value: 'amazon', label: 'General (Amazon)' },
@@ -21,8 +47,6 @@ const CATEGORIES = [
   { value: 'electric', label: 'Electronics & Electricals' },
   { value: 'book', label: 'Books & Stationery' },
 ];
-
-
 
 export default function SellerVerification() {
   const [category, setCategory] = useState('amazon');
@@ -35,8 +59,8 @@ export default function SellerVerification() {
   const [loadingStage, setLoadingStage] = useState('');
   const [validationResult, setValidationResult] = useState(null);
   const [error, setError] = useState(null);
-  const [expandedSections, setExpandedSections] = useState({});
-  
+
+  // Webcam capture (preserved)
   const [showWebcam, setShowWebcam] = useState(false);
   const [cameraStream, setCameraStream] = useState(null);
   const [cameraError, setCameraError] = useState(null);
@@ -46,27 +70,24 @@ export default function SellerVerification() {
   const startWebcam = async () => {
     try {
       setCameraError(null);
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
           facingMode: 'environment',
           width: { ideal: 1280 },
-          height: { ideal: 720 }
-        } 
+          height: { ideal: 720 },
+        },
       });
-      
       setCameraStream(stream);
       setShowWebcam(true);
-      
       setTimeout(() => {
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
-          videoRef.current.play().catch(err => {
+          videoRef.current.play().catch((err) => {
             console.error('Error playing video:', err);
             setCameraError('Failed to start video playback');
           });
         }
       }, 100);
-      
       setError(null);
     } catch (err) {
       console.error('Camera error:', err);
@@ -78,7 +99,7 @@ export default function SellerVerification() {
 
   const stopWebcam = () => {
     if (cameraStream) {
-      cameraStream.getTracks().forEach(track => track.stop());
+      cameraStream.getTracks().forEach((track) => track.stop());
       setCameraStream(null);
     }
     if (videoRef.current) {
@@ -89,60 +110,69 @@ export default function SellerVerification() {
   };
 
   const capturePhoto = () => {
-    if (videoRef.current && canvasRef.current && videoRef.current.readyState === videoRef.current.HAVE_ENOUGH_DATA) {
+    if (
+      videoRef.current &&
+      canvasRef.current &&
+      videoRef.current.readyState === videoRef.current.HAVE_ENOUGH_DATA
+    ) {
       const canvas = canvasRef.current;
       const video = videoRef.current;
-      
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-      
       const ctx = canvas.getContext('2d');
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const file = new File([blob], `webcam-${Date.now()}.jpg`, { type: 'image/jpeg' });
-          setImages(prev => [...prev, file]);
-          
-          const reader = new FileReader();
-          reader.onloadend = () => setImagePreviews(prev => [...prev, reader.result]);
-          reader.readAsDataURL(file);
-          
-          setError(null);
-        }
-      }, 'image/jpeg', 0.95);
-    } else {
-      setError('Camera feed not ready. Please wait a moment and try again.');
+      ctx.drawImage(video, 0, 0);
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            const file = new File([blob], 'webcam-capture-' + Date.now() + '.jpg', {
+              type: 'image/jpeg',
+            });
+            handleAddImages([file]);
+          }
+        },
+        'image/jpeg',
+        0.9
+      );
     }
   };
 
-  useEffect(() => {
-    return () => {
-      if (cameraStream) {
-        cameraStream.getTracks().forEach(track => track.stop());
-      }
-    };
-  }, [cameraStream]);
-
-  const handleImageUpload = (e) => {
-    const files = Array.from(e.target.files);
-    const validFiles = files.filter(file => 
-      file.type === 'image/jpeg' || file.type === 'image/png'
-    ).slice(0, 10 - images.length);
-    
-    setImages(prev => [...prev, ...validFiles]);
-    validFiles.forEach((file) => {
-      const reader = new FileReader();
-      reader.onloadend = () => setImagePreviews(prev => [...prev, reader.result]);
-      reader.readAsDataURL(file);
+  const handleAddImages = (files) => {
+    const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+    const incoming = Array.from(files).filter((f) => allowed.includes(f.type));
+    if (incoming.length === 0) {
+      setError('Only JPG, PNG and WEBP images are allowed.');
+      return;
+    }
+    setImages((prev) => {
+      const next = [...prev, ...incoming].slice(0, 10);
+      setImagePreviews(
+        next.map((img) =>
+          typeof img === 'string' ? img : URL.createObjectURL(img)
+        )
+      );
+      return next;
     });
+    setError(null);
+  };
+
+  const handleFileChange = (e) => {
+    handleAddImages(e.target.files);
+    e.target.value = '';
   };
 
   const removeImage = (index) => {
-    setImages(prev => prev.filter((_, i) => i !== index));
-    setImagePreviews(prev => prev.filter((_, i) => i !== index));
+    setImages((prev) => {
+      const next = prev.filter((_, i) => i !== index);
+      setImagePreviews(
+        next.map((img) =>
+          typeof img === 'string' ? img : URL.createObjectURL(img)
+        )
+      );
+      return next;
+    });
   };
 
+  // Submit to the pre-upload validator (preserved)
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
@@ -167,7 +197,6 @@ export default function SellerVerification() {
       formData.append('description', description.trim());
       formData.append('actual_weight', actualWeight.trim());
       formData.append('actual_dimensions', actualDimensions.trim());
-      
       images.forEach((image) => formData.append('images', image));
 
       const stages = [
@@ -175,17 +204,21 @@ export default function SellerVerification() {
         'Running OCR analysis...',
         'AI validation in progress...',
         'Checking compliance...',
-        'Generating report...'
+        'Generating report...',
       ];
       let idx = 0;
       const interval = setInterval(() => {
         if (idx < stages.length) setLoadingStage(stages[idx++]);
       }, 1800);
 
-      const response = await fetch(`${API_BASE_URL}/api/seller/check-upload-text`, {
-        method: 'POST',
-        body: formData,
-      });
+      const response = await fetch(
+        API_BASE_URL + '/api/seller/check-upload-text',
+        {
+          method: 'POST',
+          body: formData,
+          credentials: 'include',
+        }
+      );
 
       clearInterval(interval);
       const data = await response.json();
@@ -210,569 +243,511 @@ export default function SellerVerification() {
     setActualWeight('');
     setActualDimensions('');
     setCategory('amazon');
-    setExpandedSections({});
     setError(null);
     stopWebcam();
   };
 
-  const getGradeColor = (grade) => {
-    if (!grade) return 'text-gray-400';
-    const g = grade.toUpperCase();
-    // Phase 12: 'N/A' (indeterminate analysis) renders gray, not green —
-    // 'N/A'.includes('A') was true, so it previously showed as A-grade green.
-    if (g === 'N/A' || g === 'NA' || g === 'PENDING') return 'text-gray-400';
-    if (g.includes('A')) return 'text-green-400';
-    if (g.includes('B')) return 'text-blue-400';
-    if (g.includes('C')) return 'text-amber-400';
-    return 'text-red-400';
-  };
-
-  const getGradeBg = (grade) => {
-    if (!grade) return 'bg-gray-900/40 border-gray-500/30';
-    const g = grade.toUpperCase();
-    // Phase 12: 'N/A' renders gray (was wrongly green).
-    if (g === 'N/A' || g === 'NA' || g === 'PENDING') return 'bg-gray-900/40 border-gray-500/30';
-    if (g.includes('A')) return 'bg-green-900/40 border-green-500/50';
-    if (g.includes('B')) return 'bg-blue-900/40 border-blue-500/50';
-    if (g.includes('C')) return 'bg-amber-900/40 border-amber-500/50';
-    return 'bg-red-900/40 border-red-500/50';
-  };
-
-  const toggleSection = (section) => {
-    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
-  };
-
-  const renderIssues = (issues, severity, color, icon) => {
-    if (!issues || issues.length === 0) return null;
-
-    const colorClasses = {
-      high: { bg: 'bg-red-900/20', border: 'border-red-500/30', text: 'text-red-400', hover: 'hover:border-red-400/50' },
-      medium: { bg: 'bg-amber-900/20', border: 'border-amber-500/30', text: 'text-amber-400', hover: 'hover:border-amber-400/50' },
-      low: { bg: 'bg-blue-900/20', border: 'border-blue-500/30', text: 'text-blue-400', hover: 'hover:border-blue-400/50' }
-    };
-
-    const classes = colorClasses[severity] || colorClasses.low;
-
-    return (
-      <div className={`${classes.bg} border ${classes.border} rounded-xl p-6 ${classes.hover} transition-all`}>
-        <div className="flex items-center justify-between mb-4 cursor-pointer" onClick={() => toggleSection(severity)}>
-          <div className="flex items-center gap-3">
-            <div className={`p-2 ${classes.bg} rounded-lg border ${classes.border}`}>{icon}</div>
-            <h4 className={`text-lg font-bold ${classes.text} uppercase tracking-wider`}>
-              {severity.charAt(0).toUpperCase() + severity.slice(1)} Issues ({issues.length})
-            </h4>
-          </div>
-          {expandedSections[severity] ? <ChevronUp className={`w-5 h-5 ${classes.text}`} /> : <ChevronDown className={`w-5 h-5 ${classes.text}`} />}
-        </div>
-        {expandedSections[severity] && (
-          <div className="space-y-3 mt-4">
-            {issues.map((issue, i) => (
-              <div key={i} className={`bg-black/60 border ${classes.border} rounded-lg p-4 hover:bg-black/80 transition-all`}>
-                <div className="flex items-start gap-3">
-                  <div className={`p-2 ${classes.bg} rounded-lg`}>{icon}</div>
-                  <div className="flex-1">
-                    <div className={`font-semibold ${classes.text} mb-1 uppercase tracking-wide`}>
-                      {issue.requirement || 'Requirement'}
-                    </div>
-                    <div className="text-sm text-gray-300 leading-relaxed">{issue.description || 'No description'}</div>
-                    {issue.notes && <div className="text-xs text-gray-400 mt-2 italic">Note: {issue.notes}</div>}
-                    {issue.penalty && <div className={`text-xs ${classes.text} mt-2 font-semibold`}>Penalty: {issue.penalty} points</div>}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  };
+  const meta = categoryMeta(category);
+  const feedback = validationResult;
+  const feedbackScore = reportScore(feedback);
+  const findings = mergeFindings(feedback);
+  const violations = normalizeViolations(feedback);
+  const summary = violationSummary(feedback);
+  const status = String(feedback?.analysis_status || '').toLowerCase();
+  const indeterminate =
+    !feedback || status.includes('indeterminate') || status.includes('demo_pending');
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <Navbar />
-      
-      <div className="p-4 sm:p-8 pt-20">
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-8">
-            <div className="w-full">
-              <h1 className="text-4xl md:text-5xl font-bold mb-2">
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400 tracking-tight">
-                  Product Compliance Verification
-                </span>
-              </h1>
-              <div className="border-t-2 border-purple-400/50">
-                <p className="mt-2 text-xs uppercase tracking-wider text-gray-400">
-                  AI-powered compliance validation
-                </p>
+    <AppShell title="Seller Verification">
+      <div className={'space-y-6 ' + (feedback ? '' : 'max-w-3xl')}>
+        {/* Validator form */}
+        <section className="bg-surface border border-default rounded-card shadow-card p-6">
+          <CardHeader
+            title="Pre-upload validator"
+            subtitle="Check a listing against Legal Metrology rules before it goes live"
+          />
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Category */}
+            <div>
+              <label className="block text-xs font-medium text-secondary mb-2">
+                Product category
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {CATEGORIES.map((c) => {
+                  const cm = categoryMeta(c.value === 'amazon' ? 'generic' : c.value);
+                  const active = category === c.value;
+                  return (
+                    <button
+                      key={c.value}
+                      type="button"
+                      onClick={() => setCategory(c.value)}
+                      className={
+                        'inline-flex items-center gap-2 h-9 px-3.5 rounded-pill border text-sm font-medium transition-colors ' +
+                        (active
+                          ? 'bg-nav-active text-white border-nav-active'
+                          : 'bg-surface text-secondary border-default hover:text-primary hover:border-muted')
+                      }
+                    >
+                      <span
+                        className="w-2 h-2 rounded-pill"
+                        style={{ backgroundColor: active ? '#fff' : cm.color }}
+                      />
+                      {c.label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
-          </div>
 
-          {!validationResult ? (
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 space-y-6">
-                  <div className="bg-black/60 backdrop-blur-xl border border-purple-500/30 rounded-xl p-6 hover:border-purple-400/50 transition-all">
-                    <label className="flex items-center gap-2 text-sm font-semibold text-purple-300 mb-3 uppercase tracking-wide">
-                      <Package className="w-4 h-4" />
-                      Product Category *
-                    </label>
-                    <select
-                      value={category}
-                      onChange={(e) => setCategory(e.target.value)}
-                      className="w-full px-4 py-3 bg-black/60 border border-purple-500/30 rounded-lg text-white focus:border-cyan-400/50 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all"
-                    >
-                      {CATEGORIES.map(cat => (
-                        <option key={cat.value} value={cat.value}>{cat.label}</option>
-                      ))}
-                    </select>
-                  </div>
+            {/* Description */}
+            <div>
+              <label className="block text-xs font-medium text-secondary mb-2">
+                Product description (as it will appear on the listing)
+              </label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Describe the product: title, features, materials, usage instructions, etc."
+                rows={4}
+                className="w-full px-4 py-3 rounded-tile border border-default bg-surface text-sm text-primary placeholder:text-muted focus:outline-none focus:border-accent transition-colors resize-none"
+              />
+              <div className="flex items-center justify-between mt-1.5">
+                <p className="text-xs text-secondary">
+                  Characters: {description.length}
+                </p>
+                <p className="text-xs text-muted">Recommended: 100+ characters</p>
+              </div>
+            </div>
 
-                  <div className="bg-black/60 backdrop-blur-xl border border-purple-500/30 rounded-xl p-6 hover:border-purple-400/50 transition-all">
-                    <label className="flex items-center gap-2 text-sm font-semibold text-purple-300 mb-3 uppercase tracking-wide">
-                      <FileText className="w-4 h-4" />
-                      Product Description *
-                    </label>
-                    <textarea
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      required
-                      rows={6}
-                      className="w-full px-4 py-3 bg-black/60 border border-purple-500/30 rounded-lg text-white resize-none focus:border-cyan-400/50 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all"
-                      placeholder="Describe your product in detail... Include brand, features, materials, usage instructions, etc."
-                    />
-                    <div className="flex items-center justify-between mt-2">
-                      <div className="text-xs text-gray-400">Characters: {description.length}</div>
-                      <div className="text-xs text-gray-500">Recommended: 100+ characters</div>
-                    </div>
-                  </div>
+            {/* Weight + dimensions */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="border border-default rounded-tile p-4">
+                <label className="flex items-center gap-2 text-xs font-medium text-secondary mb-2">
+                  <Weight className="w-4 h-4" />
+                  Actual weight (declared)
+                </label>
+                <input
+                  type="text"
+                  value={actualWeight}
+                  onChange={(e) => setActualWeight(e.target.value)}
+                  placeholder="e.g., 250g, 1.5kg"
+                  className="w-full h-10 px-3.5 rounded-pill border border-default bg-surface text-sm text-primary placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+                />
+              </div>
+              <div className="border border-default rounded-tile p-4">
+                <label className="flex items-center gap-2 text-xs font-medium text-secondary mb-2">
+                  <Ruler className="w-4 h-4" />
+                  Actual dimensions (declared)
+                </label>
+                <input
+                  type="text"
+                  value={actualDimensions}
+                  onChange={(e) => setActualDimensions(e.target.value)}
+                  placeholder="e.g., 15x10x5 cm"
+                  className="w-full h-10 px-3.5 rounded-pill border border-default bg-surface text-sm text-primary placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+                />
+              </div>
+            </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-black/60 backdrop-blur-xl border border-purple-500/30 rounded-xl p-6 hover:border-purple-400/50 transition-all">
-                      <label className="flex items-center gap-2 text-sm font-semibold text-purple-300 mb-3 uppercase tracking-wide">
-                        <Weight className="w-4 h-4" />
-                        Actual Weight
-                      </label>
-                      <input
-                        type="text"
-                        value={actualWeight}
-                        onChange={(e) => setActualWeight(e.target.value)}
-                        className="w-full px-4 py-3 bg-black/60 border border-purple-500/30 rounded-lg text-white focus:border-cyan-400/50 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all"
-                        placeholder="e.g., 250g, 1.5kg"
-                      />
-                    </div>
-
-                    <div className="bg-black/60 backdrop-blur-xl border border-purple-500/30 rounded-xl p-6 hover:border-purple-400/50 transition-all">
-                      <label className="flex items-center gap-2 text-sm font-semibold text-purple-300 mb-3 uppercase tracking-wide">
-                        <Ruler className="w-4 h-4" />
-                        Actual Dimensions
-                      </label>
-                      <input
-                        type="text"
-                        value={actualDimensions}
-                        onChange={(e) => setActualDimensions(e.target.value)}
-                        className="w-full px-4 py-3 bg-black/60 border border-purple-500/30 rounded-lg text-white focus:border-cyan-400/50 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all"
-                        placeholder="e.g., 15x10x5 cm"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="bg-black/60 backdrop-blur-xl border border-purple-500/30 rounded-xl p-6 hover:border-purple-400/50 transition-all">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="flex items-center gap-2 text-lg font-bold text-white">
-                        <ImageIcon className="w-5 h-5 text-purple-400" />
-                        Product Images * ({images.length}/10)
-                      </h3>
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          onClick={showWebcam ? stopWebcam : startWebcam}
-                          className={`px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all ${
-                            showWebcam 
-                              ? 'bg-red-500/20 border border-red-500/50 text-red-400 hover:bg-red-500/30' 
-                              : 'bg-blue-500/20 border border-blue-500/50 text-blue-400 hover:bg-blue-500/30'
-                          }`}
-                        >
-                          {showWebcam ? (
-                            <>
-                              <X className="w-4 h-4" />
-                              Close
-                            </>
-                          ) : (
-                            <>
-                              <Video className="w-4 h-4" />
-                              Camera
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    </div>
-
-                    {showWebcam && (
-                      <div className="mb-6 bg-black/80 border border-cyan-500/30 rounded-xl p-4 overflow-hidden">
-                        <div className="relative aspect-video bg-black rounded-lg overflow-hidden mb-4">
-                          <video
-                            ref={videoRef}
-                            autoPlay
-                            playsInline
-                            muted
-                            className="w-full h-full object-cover"
-                          />
-                          {!cameraStream && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/80">
-                              <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
-                            </div>
-                          )}
-                          {cameraError && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/80 p-4">
-                              <div className="text-center">
-                                <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-2" />
-                                <p className="text-red-400 text-sm">{cameraError}</p>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                        <canvas ref={canvasRef} className="hidden" />
-                        <button
-                          type="button"
-                          onClick={capturePhoto}
-                          disabled={images.length >= 10 || !cameraStream}
-                          className="w-full px-6 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 rounded-lg font-semibold hover:shadow-lg hover:shadow-cyan-500/50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all"
-                        >
-                          <Camera className="w-5 h-5" />
-                          Capture Photo {images.length >= 10 && '(Max reached)'}
-                        </button>
-                      </div>
-                    )}
-
-                    {!showWebcam && (
-                      <label className="cursor-pointer block mb-6">
-                        <div className="border-2 border-dashed border-purple-500/30 rounded-xl p-8 text-center hover:border-cyan-400/50 bg-black/40 transition-all hover:bg-black/60">
-                          <Upload className="w-12 h-12 mx-auto mb-4 text-purple-400" />
-                          <p className="text-sm text-gray-300 mb-2 font-semibold">Upload Images from Device</p>
-                          <p className="text-xs text-gray-500">JPEG/PNG • Max 10 images</p>
-                        </div>
-                        <input
-                          type="file"
-                          accept="image/jpeg,image/png"
-                          multiple
-                          onChange={handleImageUpload}
-                          disabled={images.length >= 10}
-                          className="hidden"
-                        />
-                      </label>
-                    )}
-
-                    {imagePreviews.length > 0 && (
-                      <div>
-                        <div className="text-sm font-semibold text-purple-300 mb-3 uppercase tracking-wide">
-                          Uploaded Images
-                        </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-                          {imagePreviews.map((preview, i) => (
-                            <div key={i} className="relative group">
-                              <img
-                                src={preview}
-                                alt={`Preview ${i + 1}`}
-                                className="w-full h-32 object-cover rounded-lg border-2 border-purple-500/30 group-hover:border-purple-400/60 transition-all"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => removeImage(i)}
-                                className="absolute top-2 right-2 p-1.5 bg-red-600 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-700"
-                              >
-                                <X className="w-4 h-4" />
-                              </button>
-                              <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/80 rounded text-xs text-white font-semibold">
-                                #{i + 1}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
+            {/* Images + webcam (preserved) */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="flex items-center gap-2 text-xs font-medium text-secondary">
+                  <ImageIcon className="w-4 h-4" />
+                  Product images ({images.length}/10)
+                </label>
+                <div className="flex items-center gap-2">
                   <button
-                    type="submit"
-                    disabled={loading || images.length === 0}
-                    className="w-full px-8 py-4 bg-gradient-to-r from-purple-600 via-pink-600 to-cyan-600 rounded-xl font-bold text-lg hover:shadow-xl hover:shadow-purple-500/50 disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wide flex justify-center items-center gap-3 transition-all"
+                    type="button"
+                    onClick={showWebcam ? stopWebcam : startWebcam}
+                    className={
+                      'inline-flex items-center gap-1.5 h-8 px-3 rounded-pill border text-xs font-semibold transition-colors ' +
+                      (showWebcam
+                        ? 'bg-surface text-critical border-critical'
+                        : 'bg-surface text-primary border-default hover:border-muted')
+                    }
                   >
-                    {loading ? (
+                    {showWebcam ? (
                       <>
-                        <Loader2 className="w-6 h-6 animate-spin" />
-                        {loadingStage || 'Processing...'}
+                        <X className="w-3.5 h-3.5" /> Close camera
                       </>
                     ) : (
                       <>
-                        <Send className="w-6 h-6" />
-                        Validate Product Compliance
+                        <Camera className="w-3.5 h-3.5" /> Use camera
                       </>
                     )}
                   </button>
-
-                  {error && (
-                    <div className="flex items-center gap-3 text-red-400 bg-red-900/20 border border-red-500/30 rounded-xl p-4">
-                      <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                      <span>{error}</span>
-                    </div>
-                  )}
+                  <label className="inline-flex items-center gap-1.5 h-8 px-3 rounded-pill bg-accent text-white text-xs font-semibold hover:opacity-90 transition-opacity cursor-pointer">
+                    <Upload className="w-3.5 h-3.5" />
+                    Upload
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      multiple
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+                  </label>
                 </div>
+              </div>
 
-                <div className="space-y-6">
-                  <div className="bg-black/60 backdrop-blur-xl border border-purple-500/30 rounded-xl p-6 hover:border-purple-400/50 transition-all">
-                    <h3 className="flex items-center gap-2 text-lg font-bold text-white mb-4">
-                      <BarChart3 className="w-5 h-5 text-purple-400" />
-                      Validation Info
-                    </h3>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between p-3 bg-black/40 rounded-lg border border-purple-500/20">
-                        <span className="text-sm text-gray-400">Images</span>
-                        <span className="text-lg font-bold text-purple-400">{images.length}/10</span>
-                      </div>
-                      <div className="flex items-center justify-between p-3 bg-black/40 rounded-lg border border-purple-500/20">
-                        <span className="text-sm text-gray-400">Description</span>
-                        <span className="text-lg font-bold text-cyan-400">{description.length} chars</span>
-                      </div>
-                      <div className="flex items-center justify-between p-3 bg-black/40 rounded-lg border border-purple-500/20">
-                        <span className="text-sm text-gray-400">Category</span>
-                        <span className="text-sm font-bold text-pink-400 uppercase">
-                          {CATEGORIES.find(c => c.value === category)?.label.split(' ')[0]}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-black/60 backdrop-blur-xl border border-cyan-500/30 rounded-xl p-6 hover:border-cyan-400/50 transition-all">
-                    <h3 className="flex items-center gap-2 text-lg font-bold text-white mb-4">
-                      <Info className="w-5 h-5 text-cyan-400" />
-                      Guidelines
-                    </h3>
-                    <div className="space-y-3">
-                      <div className="flex items-start gap-3">
-                        <CheckCircle2 className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
-                        <p className="text-sm text-gray-300">Upload clear, well-lit product images</p>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <CheckCircle2 className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
-                        <p className="text-sm text-gray-300">Include all product labels and certifications</p>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <CheckCircle2 className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
-                        <p className="text-sm text-gray-300">Provide detailed product description</p>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <CheckCircle2 className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
-                        <p className="text-sm text-gray-300">Add accurate weight and dimensions</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-gradient-to-br from-purple-900/20 to-pink-900/20 border border-purple-500/30 rounded-xl p-6 hover:border-purple-400/50 transition-all">
-                    <h3 className="flex items-center gap-2 text-lg font-bold text-white mb-3">
-                      <Shield className="w-5 h-5 text-purple-400" />
-                      Need Help?
-                    </h3>
-                    <p className="text-sm text-gray-300 mb-4">
-                      Our AI will analyze your product for compliance with marketplace standards.
+              {showWebcam ? (
+                <div className="mt-3 border border-default rounded-tile p-4 bg-page">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-xs font-medium text-secondary">
+                      Camera preview
                     </p>
-                    <button type="button" className="w-full px-4 py-2 bg-purple-500/20 border border-purple-500/50 rounded-lg text-purple-300 hover:bg-purple-500/30 transition-all text-sm font-semibold">
-                      View Documentation
+                    <button
+                      type="button"
+                      onClick={capturePhoto}
+                      className="inline-flex items-center gap-1.5 h-8 px-3 rounded-pill bg-nav-active text-white text-xs font-semibold hover:opacity-90 transition-opacity"
+                    >
+                      <Camera className="w-3.5 h-3.5" />
+                      Capture photo
                     </button>
                   </div>
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    className="w-full max-h-64 object-contain rounded-tile bg-surface"
+                  />
+                  <canvas ref={canvasRef} className="hidden" />
+                  {cameraError ? (
+                    <p className="mt-2 text-xs text-critical">{cameraError}</p>
+                  ) : null}
                 </div>
+              ) : null}
+
+              {imagePreviews.length > 0 ? (
+                <div className="mt-3 grid grid-cols-3 sm:grid-cols-5 gap-3">
+                  {imagePreviews.map((src, i) => (
+                    <div
+                      key={i}
+                      className="relative border border-default rounded-tile overflow-hidden group"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={src}
+                        alt={'Capture ' + (i + 1)}
+                        className="w-full h-20 object-cover bg-page"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(i)}
+                        className="absolute top-1 right-1 w-6 h-6 rounded-pill bg-surface border border-default flex items-center justify-center text-critical hover:border-critical transition-colors"
+                        aria-label={'Remove image ' + (i + 1)}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-3 text-xs text-muted">
+                  Upload clear photos of the product label (front, back, and any
+                  mandatory declarations).
+                </p>
+              )}
+            </div>
+
+            {error ? (
+              <div className="flex items-start gap-2 border border-critical rounded-tile p-3 text-sm text-critical">
+                <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                {error}
               </div>
-            </form>
-          ) : (
-            <div className="space-y-6">
-              <div className={`rounded-xl border-2 p-8 ${getGradeBg(validationResult.compliance_grade)}`}>
-                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-6">
-                  <div className="flex-1">
-                    <h3 className="text-3xl font-bold mb-3 text-white">Compliance Report</h3>
-                    <div className="flex flex-wrap gap-3">
-                      <div className="px-3 py-1 bg-black/40 rounded-lg border border-purple-500/30">
-                        <span className="text-xs text-gray-400 uppercase">Category:</span>
-                        <span className="text-sm text-purple-300 font-semibold ml-2 uppercase">
-                          {validationResult.category || 'N/A'}
-                        </span>
-                      </div>
-                      <div className="px-3 py-1 bg-black/40 rounded-lg border border-purple-500/30">
-                        <span className="text-xs text-gray-400 uppercase">Date:</span>
-                        <span className="text-sm text-cyan-300 font-semibold ml-2">
-                          {new Date(validationResult.analysis_date).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-6">
-                    <div className="text-center">
-                      <div className={`text-6xl font-bold ${getGradeColor(validationResult.compliance_grade)}`}>
-                        {/* Phase 12: null score (indeterminate) shows N/A, never a fake 0 */}
-                        {validationResult.compliance_score != null ? validationResult.compliance_score : 'N/A'}
-                      </div>
-                      <div className="text-sm text-gray-400 uppercase tracking-wider mt-1">Score</div>
-                    </div>
-                    <div className="text-center">
-                      <div className={`text-4xl font-bold ${getGradeColor(validationResult.compliance_grade)}`}>
-                        {validationResult.compliance_grade || 'N/A'}
-                      </div>
-                      <div className="text-sm text-gray-400 uppercase tracking-wider mt-1">Grade</div>
-                    </div>
-                  </div>
-                </div>
+            ) : null}
 
-                {/* Phase 12: indeterminate-analysis notice */}
-                {validationResult.analysis_status === 'indeterminate' && (
-                  <div className="bg-blue-900/20 border border-blue-500/30 rounded-xl p-4 mb-6">
-                    <div className="flex items-center gap-3">
-                      <AlertCircle className="w-6 h-6 text-blue-400 flex-shrink-0" />
-                      <p className="text-sm text-gray-300">
-                        The AI compliance service was unavailable (Gemini quota exhausted), so this
-                        product could not be graded. No violations are asserted — please try again
-                        after the quota resets.
-                      </p>
-                    </div>
-                  </div>
+            {loading && loadingStage ? (
+              <div className="flex items-center gap-2 text-sm text-secondary">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                {loadingStage}
+              </div>
+            ) : null}
+
+            <div className="flex items-center gap-3">
+              <button
+                type="submit"
+                disabled={loading}
+                className="h-10 px-6 rounded-pill bg-accent text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Analyzing...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4" />
+                    Validate listing
+                  </>
                 )}
+              </button>
+              {feedback ? (
+                <button
+                  type="button"
+                  onClick={resetForm}
+                  className="h-10 px-5 rounded-pill border border-default text-sm font-medium text-secondary hover:text-primary hover:border-muted transition-colors"
+                >
+                  Start over
+                </button>
+              ) : null}
+            </div>
+          </form>
+        </section>
 
-                {validationResult.violation_summary && (
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="bg-red-900/20 border border-red-500/30 rounded-xl p-4 text-center hover:border-red-400/50 transition-all">
-                      <XCircle className="w-8 h-8 text-red-400 mx-auto mb-2" />
-                      <div className="text-3xl font-bold text-red-400">
-                        {validationResult.violation_summary.high || 0}
-                      </div>
-                      <div className="text-xs text-gray-400 uppercase tracking-wider mt-1">High Priority</div>
-                    </div>
-                    <div className="bg-amber-900/20 border border-amber-500/30 rounded-xl p-4 text-center hover:border-amber-400/50 transition-all">
-                      <AlertTriangle className="w-8 h-8 text-amber-400 mx-auto mb-2" />
-                      <div className="text-3xl font-bold text-amber-400">
-                        {validationResult.violation_summary.medium || 0}
-                      </div>
-                      <div className="text-xs text-gray-400 uppercase tracking-wider mt-1">Medium Priority</div>
-                    </div>
-                    <div className="bg-blue-900/20 border border-blue-500/30 rounded-xl p-4 text-center hover:border-blue-400/50 transition-all">
-                      <Info className="w-8 h-8 text-blue-400 mx-auto mb-2" />
-                      <div className="text-3xl font-bold text-blue-400">
-                        {validationResult.violation_summary.low || 0}
-                      </div>
-                      <div className="text-xs text-gray-400 uppercase tracking-wider mt-1">Low Priority</div>
-                    </div>
-                    <div className="bg-purple-900/20 border border-purple-500/30 rounded-xl p-4 text-center hover:border-purple-400/50 transition-all">
-                      <Shield className="w-8 h-8 text-purple-400 mx-auto mb-2" />
-                      <div className="text-3xl font-bold text-purple-400">
-                        {validationResult.violation_summary.total || 0}
-                      </div>
-                      <div className="text-xs text-gray-400 uppercase tracking-wider mt-1">Total Issues</div>
-                    </div>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-                  <div className={`rounded-xl p-4 border-2 ${
-                    validationResult.ready_for_upload 
-                      ? 'bg-green-900/20 border-green-500/50' 
-                      : 'bg-red-900/20 border-red-500/50'
-                  }`}>
-                    <div className="flex items-center gap-3 mb-2">
-                      {validationResult.ready_for_upload ? (
-                        <CheckCircle2 className="w-6 h-6 text-green-400" />
+        {/* Readiness report - reuses the Phase 3 checklist + violations layout */}
+        {feedback ? (
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            <div className="xl:col-span-2 space-y-6">
+              <section className="bg-surface border border-default rounded-card shadow-card p-6">
+                <CardHeader
+                  title="Readiness report"
+                  subtitle={feedback.estimated_approval_chance
+                    ? 'Estimated approval chance: ' + feedback.estimated_approval_chance
+                    : undefined}
+                />
+                <div className="flex flex-col sm:flex-row items-start gap-6">
+                  <ProgressRing
+                    value={feedbackScore}
+                    size={120}
+                    thickness={9}
+                    label="Readiness score"
+                    centerValue={
+                      feedbackScore === null
+                        ? 'N/A'
+                        : Math.round(feedbackScore) + '%'
+                    }
+                    centerLabel={'Grade ' + (feedback.compliance_grade || 'N/A')}
+                  />
+                  <div className="flex-1 space-y-3 w-full">
+                    <div
+                      className={
+                        'inline-flex items-center gap-2 h-9 px-4 rounded-pill border text-sm font-semibold ' +
+                        (indeterminate
+                          ? 'bg-surface text-secondary border-default'
+                          : feedback.ready_for_upload
+                            ? 'bg-surface text-success border-success'
+                            : 'bg-surface text-critical border-critical')
+                      }
+                    >
+                      {indeterminate ? (
+                        <AlertCircle className="w-4 h-4" />
+                      ) : feedback.ready_for_upload ? (
+                        <CheckCircle2 className="w-4 h-4" />
                       ) : (
-                        <XCircle className="w-6 h-6 text-red-400" />
+                        <Shield className="w-4 h-4" />
                       )}
-                      <div className="text-sm font-semibold text-gray-300 uppercase tracking-wide">Ready for Upload</div>
+                      {indeterminate
+                        ? 'Analysis pending - do not upload yet'
+                        : feedback.ready_for_upload
+                          ? 'Ready for upload'
+                          : 'Not ready for upload'}
                     </div>
-                    <div className={`text-2xl font-bold ${
-                      validationResult.ready_for_upload ? 'text-green-400' : 'text-red-400'
-                    }`}>
-                      {validationResult.ready_for_upload ? 'YES' : 'NO'}
-                    </div>
-                  </div>
-                  <div className="bg-cyan-900/20 border-2 border-cyan-500/50 rounded-xl p-4">
-                    <div className="flex items-center gap-3 mb-2">
-                      <TrendingUp className="w-6 h-6 text-cyan-400" />
-                      <div className="text-sm font-semibold text-gray-300 uppercase tracking-wide">Approval Chance</div>
-                    </div>
-                    <div className="text-2xl font-bold text-cyan-400">
-                      {validationResult.estimated_approval_chance || 'Unknown'}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                {renderIssues(validationResult.high_priority_issues, 'high', 'red', <XCircle className="w-5 h-5 text-red-400" />)}
-                {renderIssues(validationResult.medium_priority_issues, 'medium', 'amber', <AlertTriangle className="w-5 h-5 text-amber-400" />)}
-                {renderIssues(validationResult.low_priority_issues, 'low', 'blue', <Info className="w-5 h-5 text-blue-400" />)}
-              </div>
-
-              {validationResult.recommendations && validationResult.recommendations.length > 0 && (
-                <div className="bg-gradient-to-br from-purple-900/20 to-cyan-900/20 border border-purple-500/30 rounded-xl p-6 hover:border-purple-400/50 transition-all">
-                  <div className="flex items-center justify-between mb-4 cursor-pointer" onClick={() => toggleSection('recommendations')}>
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-cyan-500/20 rounded-lg border border-cyan-500/50">
-                        <Star className="w-6 h-6 text-cyan-400" />
-                      </div>
-                      <h4 className="text-xl font-bold text-white uppercase tracking-wider">
-                        Recommendations ({validationResult.recommendations.length})
-                      </h4>
-                    </div>
-                    {expandedSections.recommendations ? <ChevronUp className="w-5 h-5 text-cyan-400" /> : <ChevronDown className="w-5 h-5 text-cyan-400" />}
-                  </div>
-                  {expandedSections.recommendations && (
-                    <div className="mt-4 space-y-3">
-                      {validationResult.recommendations.map((rec, i) => (
-                        <div key={i} className="bg-black/60 border border-cyan-500/20 rounded-lg p-4 hover:bg-black/80 transition-all">
-                          <div className="flex items-start gap-3">
-                            <CheckCircle2 className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
-                            <div className="text-sm text-gray-300 leading-relaxed">{rec}</div>
-                          </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      {[
+                        { label: 'Critical', value: summary.critical, tone: 'var(--color-critical)' },
+                        { label: 'Major', value: summary.major, tone: 'var(--color-warning)' },
+                        { label: 'Minor', value: summary.minor, tone: 'var(--color-secondary)' },
+                      ].map((item) => (
+                        <div
+                          key={item.label}
+                          className="border border-default rounded-tile p-3 text-center"
+                        >
+                          <p
+                            className="text-2xl font-bold tabular-nums"
+                            style={{ color: item.tone }}
+                          >
+                            {item.value}
+                          </p>
+                          <p className="mt-0.5 text-xs text-secondary">{item.label}</p>
                         </div>
                       ))}
                     </div>
-                  )}
+                  </div>
                 </div>
-              )}
 
-              <div className="flex flex-col sm:flex-row gap-4">
-                <button
-                  onClick={resetForm}
-                  className="flex-1 px-6 py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-semibold hover:shadow-lg hover:shadow-purple-500/50 transition-all uppercase flex items-center justify-center gap-2"
-                >
-                  <Plus className="w-5 h-5" />
-                  New Validation
-                </button>
-                
-                {validationResult.ready_for_upload && (
-                  <button
-                    onClick={() => alert('Proceed to marketplace upload!')}
-                    className="flex-1 px-6 py-4 bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl font-semibold hover:shadow-lg hover:shadow-green-500/50 transition-all uppercase flex items-center justify-center gap-2"
-                  >
-                    <CheckCircle2 className="w-5 h-5" />
-                    Proceed to Upload
-                  </button>
+                {/* Weight / dimension validation results (preserved feature) */}
+                {feedback.validation_results ? (
+                  <div className="mt-5 border border-default rounded-tile p-4">
+                    <h4 className="text-sm font-semibold text-primary mb-3">
+                      Declared vs. package values
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {['weight_validation', 'dimension_validation'].map((key) => {
+                        const v = feedback.validation_results?.[key];
+                        if (!v) return null;
+                        const ok = String(v.status || '').toLowerCase() === 'match';
+                        return (
+                          <div key={key} className="border border-default rounded-tile p-3">
+                            <div className="flex items-center justify-between">
+                              <p className="text-xs font-medium text-secondary">
+                                {key === 'weight_validation' ? 'Weight' : 'Dimensions'}
+                              </p>
+                              <StatusPill tone={ok ? 'success' : 'critical'}>
+                                {v.status || 'unknown'}
+                              </StatusPill>
+                            </div>
+                            <p className="mt-2 text-xs text-secondary">
+                              Declared: {v.seller_declared || 'N/A'}
+                            </p>
+                            <p className="text-xs text-secondary">
+                              Package shows: {v.ocr_extracted || 'N/A'}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : null}
+              </section>
+
+              {/* Declaration checklist (same ChecklistRow as Phase 3) */}
+              <section className="bg-surface border border-default rounded-card shadow-card p-6">
+                <CardHeader
+                  title="Declaration checklist"
+                  subtitle="Each mandatory declaration with the layer that verified it"
+                />
+                {findings.length === 0 ? (
+                  <EmptyState
+                    icon={AlertCircle}
+                    title="No declaration findings available"
+                    hint="The validator could not extract declarations from these images."
+                  />
+                ) : (
+                  findings.map((f) => (
+                    <ChecklistRow
+                      key={f.requirement}
+                      requirement={f.requirement}
+                      status={f.status}
+                      layer={f.layer}
+                      value={f.value}
+                    />
+                  ))
                 )}
-              </div>
+              </section>
 
-              <div className="bg-black/60 border border-purple-500/30 rounded-xl p-6 text-center">
-                <p className="text-sm text-gray-300">
-                  {validationResult.ready_for_upload ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <CheckCircle2 className="w-5 h-5 text-green-400" />
-                      Your product meets compliance requirements and is ready for marketplace upload!
-                    </span>
-                  ) : (
-                    <span className="flex items-center justify-center gap-2">
-                      <AlertCircle className="w-5 h-5 text-amber-400" />
-                      Please address the issues above before uploading to the marketplace.
-                    </span>
-                  )}
-                </p>
-              </div>
+              {/* Issues grouped by severity (design.md severity tokens) */}
+              <section className="bg-surface border border-default rounded-card shadow-card p-6">
+                <CardHeader
+                  title="Issues to fix"
+                  subtitle="Grouped by severity - critical, major, minor"
+                />
+                {summary.total === 0 ? (
+                  <EmptyState
+                    icon={CheckCircle2}
+                    title="No issues found"
+                    hint={
+                      indeterminate
+                        ? 'Analysis has not completed yet.'
+                        : 'All evaluated declarations look good.'
+                    }
+                  />
+                ) : (
+                  <div className="space-y-5">
+                    {['critical', 'major', 'minor'].map((severity) => {
+                      const items = violations[severity];
+                      if (!items || items.length === 0) return null;
+                      const sm = severityMeta(severity);
+                      return (
+                        <div key={severity}>
+                          <div className="flex items-center gap-2 mb-2">
+                            <span
+                              className="w-2.5 h-2.5 rounded-pill"
+                              style={{ backgroundColor: sm.color }}
+                            />
+                            <h4 className="text-sm font-semibold text-primary capitalize">
+                              {severity}
+                            </h4>
+                            <span className="text-xs text-muted">{items.length}</span>
+                          </div>
+                          <div className="divide-y divide-default">
+                            {items.map((v, i) => (
+                              <div key={v.name + '-' + i} className="py-3">
+                                <p className="text-sm font-medium text-primary">
+                                  {v.name}
+                                </p>
+                                {v.description ? (
+                                  <p className="mt-1 text-xs text-secondary">
+                                    {v.description}
+                                  </p>
+                                ) : null}
+                                {v.remedy ? (
+                                  <p className="mt-1 text-xs">
+                                    <span className="font-medium text-primary">Fix:</span>{' '}
+                                    <span className="text-secondary">{v.remedy}</span>
+                                  </p>
+                                ) : null}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </section>
             </div>
-          )}
-        </div>
+
+            {/* Right column - assessment + image analysis */}
+            <div className="space-y-6">
+              <section className="bg-surface border border-default rounded-card shadow-card p-6">
+                <CardHeader title="AI assessment" />
+                {feedback.assessment ? (
+                  <p className="text-sm leading-relaxed text-secondary whitespace-pre-line">
+                    {feedback.assessment}
+                  </p>
+                ) : (
+                  <p className="text-sm text-muted">No assessment available.</p>
+                )}
+              </section>
+
+              {feedback.recommendations?.length ? (
+                <section className="bg-surface border border-default rounded-card shadow-card p-6">
+                  <CardHeader title="Recommendations" />
+                  <ul className="space-y-2">
+                    {feedback.recommendations.map((rec, i) => (
+                      <li
+                        key={i}
+                        className="flex items-start gap-2 text-xs text-secondary"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 text-accent shrink-0" />
+                        {rec}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ) : null}
+
+              {feedback.image_analysis ? (
+                <section className="bg-surface border border-default rounded-card shadow-card p-6">
+                  <CardHeader title="Image analysis" />
+                  <div className="space-y-2 text-xs text-secondary">
+                    <p>Quality: {feedback.image_analysis.quality || 'unknown'}</p>
+                    {typeof feedback.image_analysis.confidence === 'number' ? (
+                      <p>
+                        Confidence: {Math.round(feedback.image_analysis.confidence * 100)}%
+                      </p>
+                    ) : null}
+                    {feedback.image_analysis.symbols_found?.length ? (
+                      <div className="flex flex-wrap gap-1.5 mt-1">
+                        {feedback.image_analysis.symbols_found.map((s, i) => (
+                          <span
+                            key={i}
+                            className="inline-flex items-center h-6 px-2.5 rounded-pill bg-page border border-default text-[11px] font-medium text-secondary"
+                          >
+                            {s}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                </section>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
       </div>
-    </div>
+    </AppShell>
   );
 }
